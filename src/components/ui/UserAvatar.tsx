@@ -1,6 +1,5 @@
-
 import React from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { User } from "@/types";
 
 interface UserAvatarProps {
@@ -39,11 +38,30 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
     );
   }
 
+  // Generate a background color based on the user's name for visual distinction
+  const generateColorFromName = (name: string) => {
+    const colors = [
+      "bg-blue-100 text-blue-600",
+      "bg-green-100 text-green-600",
+      "bg-amber-100 text-amber-600",
+      "bg-red-100 text-red-600",
+      "bg-purple-100 text-purple-600",
+      "bg-pink-100 text-pink-600",
+      "bg-indigo-100 text-indigo-600",
+      "bg-cyan-100 text-cyan-600"
+    ];
+    
+    // Simple hash function to get a consistent color for the same name
+    const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return colors[hash % colors.length];
+  };
+
+  const avatarColorClass = generateColorFromName(user.name);
+
   return (
     <div className="relative">
       <Avatar className={sizeClasses[size]}>
-        <AvatarImage src={user.avatar} alt={user.name} className="object-cover" />
-        <AvatarFallback className="bg-primary/10 text-primary">
+        <AvatarFallback className={avatarColorClass}>
           {getInitials(user.name)}
         </AvatarFallback>
       </Avatar>

@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Plus, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import ProjectList from "@/components/dashboard/ProjectList";
 import { User, Project } from "@/types";
 import { getHomeownerProjects } from "@/services/projectService";
@@ -37,20 +35,11 @@ const HomeownerDashboard: React.FC<HomeownerDashboardProps> = ({
 
   return (
     <div className="container py-8">
-      <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Projects</h1>
-          <p className="text-muted-foreground">
-            Welcome back, {user.name}!
-          </p>
-        </div>
-        
-        <Button asChild>
-          <Link to="/projects">
-            <Plus className="mr-2 h-4 w-4" />
-            View All Projects
-          </Link>
-        </Button>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold tracking-tight">My Projects</h1>
+        <p className="text-muted-foreground">
+          Welcome back, {user.name}!
+        </p>
       </div>
 
       {loading ? (

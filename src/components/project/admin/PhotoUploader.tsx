@@ -2,7 +2,7 @@ import React, { useState, useCallback } from "react";
 import { toast } from "sonner";
 import PhotoDropzone from "./PhotoDropzone";
 import UploadPreview from "./UploadPreview";
-import { uploadProjectPhotos } from "@/data/mockApi";
+import { uploadProjectImages } from "@/services/imageService";
 
 interface PhotoUploaderProps {
   projectId: string;
@@ -57,8 +57,8 @@ const PhotoUploader: React.FC<PhotoUploaderProps> = ({
     setIsUploading(true);
     
     try {
-      // Use our mock API to upload photos
-      await uploadProjectPhotos(projectId, files);
+      // Use the real API service to upload photos
+      await uploadProjectImages(projectId, files);
       
       toast.success(`${files.length} photos uploaded successfully`);
       
@@ -75,7 +75,7 @@ const PhotoUploader: React.FC<PhotoUploaderProps> = ({
     } finally {
       setIsUploading(false);
     }
-  }, [files, projectId, previewUrls, handleDiscard, onUploadComplete]);
+  }, [files, projectId, handleDiscard, onUploadComplete]);
 
   return (
     <div className={`space-y-6 ${className}`}>

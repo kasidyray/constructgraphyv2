@@ -10,7 +10,7 @@ import {
   BuilderProjectView, 
   HomeownerProjectView 
 } from "@/components/project/views";
-import { getProjectById } from "@/services/projectService";
+import { getProjectById, updateProject } from "@/services/projectService";
 import { getProjectImages } from "@/services/imageService";
 
 const ProjectDetails: React.FC = () => {
@@ -21,6 +21,28 @@ const ProjectDetails: React.FC = () => {
   const [projectImages, setProjectImages] = useState<ProjectImage[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Function to update project thumbnail
+  const updateProjectThumbnail = async (projectId: string, images: ProjectImage[]) => {
+    if (images.length > 0 && project) {
+      // Only update if the thumbnail is different from the first image
+      if (project.thumbnail !== images[0].url) {
+        console.log('Updating project thumbnail to:', images[0].url);
+        try {
+          const updatedProject = await updateProject(projectId, {
+            thumbnail: images[0].url
+          });
+          
+          if (updatedProject) {
+            console.log('Project thumbnail updated successfully');
+            setProject(updatedProject);
+          }
+        } catch (error) {
+          console.error("Error updating project thumbnail:", error);
+        }
+      }
+    }
+  };
+
   useEffect(() => {
     if (!id) {
       navigate("/projects");
@@ -28,34 +50,54 @@ const ProjectDetails: React.FC = () => {
     }
 
     const fetchProjectData = async () => {
-      setLoading(true);
+    setLoading(true);
       try {
+        console.log('Fetching project data for ID:', id);
+        
         // Fetch project details
         const foundProject = await getProjectById(id);
         
-        if (!foundProject) {
+      if (!foundProject) {
+          console.error('Project not found for ID:', id);
           toast.error("Project not found");
-          navigate("/projects");
-          return;
-        }
+        navigate("/projects");
+        return;
+      }
 
-        // Check if homeowner has access to this project
-        if (user?.role === "homeowner" && foundProject.homeownerId !== user.id) {
+        console.log('Project found:', foundProject.title);
+
+      // Check if homeowner has access to this project
+      if (user?.role === "homeowner" && foundProject.homeownerId !== user.id) {
+          console.error('Homeowner does not have access to this project');
           toast.error("You don't have access to this project");
-          navigate("/dashboard");
-          return;
-        }
+        navigate("/dashboard");
+        return;
+      }
         
-        setProject(foundProject);
+      setProject(foundProject);
         
         // Fetch project images
+        console.log('Fetching images for project:', id);
         const images = await getProjectImages(id);
+        console.log('Retrieved images count:', images.length);
+        
+        if (images.length === 0) {
+          console.log('No images found for project');
+        } else {
+          console.log('First image URL:', images[0].url);
+        }
+        
         setProjectImages(images);
+        
+        // Update project thumbnail to first image if available
+        if (images.length > 0) {
+          updateProjectThumbnail(id, images);
+        }
       } catch (error) {
         console.error("Error fetching project data:", error);
         toast.error("Failed to load project data");
       } finally {
-        setLoading(false);
+      setLoading(false);
       }
     };
 
@@ -68,25 +110,48 @@ const ProjectDetails: React.FC = () => {
   };
 
   const handleImageUpload = (newImages: ProjectImage[]) => {
-    setProjectImages(prev => [...newImages, ...prev]);
+    console.log('New images uploaded:', newImages.length);
+    const updatedImages = [...newImages, ...projectImages];
+    setProjectImages(updatedImages);
     toast.success(`${newImages.length} image${newImages.length === 1 ? '' : 's'} uploaded successfully`);
+    
+    // Update project thumbnail if this is the first image
+    if (project && (projectImages.length === 0 || newImages.length > 0)) {
+      updateProjectThumbnail(project.id, updatedImages);
+    }
   };
 
   const handleImageDelete = (deletedImageId: string) => {
-    setProjectImages(prev => prev.filter(img => img.id !== deletedImageId));
+    console.log('Deleting image:', deletedImageId);
+    const updatedImages = projectImages.filter(img => img.id !== deletedImageId);
+    setProjectImages(updatedImages);
+    
+    // Update thumbnail if the first image was deleted
+    if (project && updatedImages.length > 0) {
+      updateProjectThumbnail(project.id, updatedImages);
+    }
   };
 
   const handleImageUpdate = (updatedImage: ProjectImage) => {
-    setProjectImages(prev => 
-      prev.map(img => img.id === updatedImage.id ? updatedImage : img)
+    console.log('Updating image:', updatedImage.id);
+    const updatedImages = projectImages.map(img => 
+      img.id === updatedImage.id ? updatedImage : img
     );
+    setProjectImages(updatedImages);
   };
 
   const refreshProjectImages = async () => {
     if (id) {
+      console.log('Refreshing project images for ID:', id);
       try {
         const images = await getProjectImages(id);
+        console.log('Refreshed images count:', images.length);
         setProjectImages(images);
+        
+        // Update project thumbnail if needed
+        if (images.length > 0 && project) {
+          updateProjectThumbnail(id, images);
+        }
       } catch (error) {
         console.error("Error refreshing project images:", error);
       }

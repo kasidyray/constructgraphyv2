@@ -34,6 +34,19 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
     });
   };
 
+  // Function to capitalize the first letter of each word
+  const capitalizeFirstLetter = (string: string) => {
+    return string.split(' ').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+  };
+
+  // Format status text with capitalized first letter
+  const formattedStatus = capitalizeFirstLetter(project.status.replace("-", " "));
+  
+  // Ensure description starts with a capital letter
+  const formattedDescription = project.description.charAt(0).toUpperCase() + project.description.slice(1);
+
   return (
     <Link to={`/projects/${project.id}`} className="block h-full">
       <Card className={`overflow-hidden transition-all duration-300 hover:shadow-md h-full ${className}`}>
@@ -53,7 +66,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             <Badge 
               className={`${statusColors[project.status]} text-white border-none`}
             >
-              {project.status.replace("-", " ")}
+              {formattedStatus}
             </Badge>
           </div>
         </div>
@@ -61,7 +74,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
         <CardContent className="space-y-3 p-4">
           <div>
             <h3 className="line-clamp-1 text-xl font-semibold">{project.title}</h3>
-            <p className="line-clamp-2 text-sm text-muted-foreground">{project.description}</p>
+            <p className="line-clamp-2 text-sm text-muted-foreground">{formattedDescription}</p>
           </div>
 
           <div className="flex items-center gap-2 text-sm text-muted-foreground">

@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ProjectImage } from "@/types";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Info, ChevronLeft, ChevronRight, X, Trash, Edit } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, X, Trash, Edit, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ImageGalleryProps {
   images: ProjectImage[];
@@ -20,25 +21,42 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   onDelete,
   onUpdate
 }) => {
+  const { user } = useAuth();
+  const isBuilder = user?.role === "builder";
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+  const [imageLoadErrors, setImageLoadErrors] = useState<Record<string, boolean>>({});
+  
+  // Log images when they change
+  useEffect(() => {
+    console.log('ImageGallery received images:', images.length);
+    if (images.length > 0) {
+      console.log('First image URL:', images[0].url);
+    }
+  }, [images]);
   
   const openLightbox = (index: number) => {
+    console.log('Opening lightbox for image index:', index);
     setSelectedImageIndex(index);
   };
   
   const closeLightbox = () => {
+    console.log('Closing lightbox');
     setSelectedImageIndex(null);
   };
   
   const goToPrevious = () => {
     if (selectedImageIndex !== null) {
-      setSelectedImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+      const newIndex = selectedImageIndex === 0 ? images.length - 1 : selectedImageIndex - 1;
+      console.log('Navigating to previous image, index:', newIndex);
+      setSelectedImageIndex(newIndex);
     }
   };
   
   const goToNext = () => {
     if (selectedImageIndex !== null) {
-      setSelectedImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+      const newIndex = selectedImageIndex === images.length - 1 ? 0 : selectedImageIndex + 1;
+      console.log('Navigating to next image, index:', newIndex);
+      setSelectedImageIndex(newIndex);
     }
   };
 
@@ -54,9 +72,18 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     e.stopPropagation(); // Prevent opening the lightbox
     if (onDelete) {
       if (window.confirm("Are you sure you want to delete this image?")) {
+        console.log('Deleting image:', imageId);
         onDelete(imageId);
       }
     }
+  };
+
+  const handleImageError = (imageId: string) => {
+    console.error('Image failed to load:', imageId);
+    setImageLoadErrors(prev => ({
+      ...prev,
+      [imageId]: true
+    }));
   };
 
   const categoryColors = {
@@ -76,6 +103,9 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     );
   }
 
+  // Use a local placeholder image instead of via.placeholder.com
+  const placeholderImage = "/placeholder-image.jpg";
+
   return (
     <div className={className}>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -86,15 +116,16 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
             onClick={() => openLightbox(index)}
           >
             <img
-              src={image.url}
+              src={imageLoadErrors[image.id] ? placeholderImage : image.url}
               alt={image.caption || "Project image"}
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
               loading="lazy"
+              onError={() => handleImageError(image.id)}
             />
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
               <div className="space-y-1">
                 <Badge 
-                  className={`${categoryColors[image.category]} text-white border-none`}
+                  className={`${categoryColors[image.category as keyof typeof categoryColors] || "bg-gray-500"} text-white border-none`}
                 >
                   {image.category}
                 </Badge>
@@ -104,7 +135,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
               </div>
             </div>
             
-            {editable && onDelete && (
+            {editable && onDelete && !isBuilder && (
               <button
                 className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                 onClick={(e) => handleDelete(e, image.id)}
@@ -118,46 +149,83 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
 
       {selectedImageIndex !== null && (
         <Dialog open={selectedImageIndex !== null} onOpenChange={closeLightbox}>
-          <DialogContent className="max-w-4xl p-0 sm:p-0">
-            <div className="relative h-[80vh] w-full">
-              <img
-                src={images[selectedImageIndex].url}
-                alt={images[selectedImageIndex].caption || "Project image"}
-                className="h-full w-full object-contain"
-              />
+          <DialogContent className="max-w-[100vw] max-h-[100vh] w-screen h-screen p-0 sm:p-0 border-none bg-black/95">
+            <div className="relative h-full w-full flex flex-col">
+              {/* Header */}
+              <div className="flex justify-between items-center p-4 text-white">
+                <div className="text-sm">
+                  {images[selectedImageIndex].caption && (
+                    <h3 className="font-medium">{images[selectedImageIndex].caption}</h3>
+                  )}
+                  <p className="text-white/70">{formatDate(images[selectedImageIndex].createdAt)}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full hover:bg-white/10 text-white"
+                    onClick={() => {
+                      console.log('Opening image in new tab:', images[selectedImageIndex].url);
+                      window.open(images[selectedImageIndex].url, '_blank');
+                    }}
+                  >
+                    <Download className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full hover:bg-white/10 text-white"
+                    onClick={closeLightbox}
+                  >
+                    <X className="h-5 w-5" />
+                  </Button>
+                </div>
+              </div>
               
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-2 top-2 z-10 rounded-full bg-black/50 text-white hover:bg-black/70"
-                onClick={closeLightbox}
-              >
-                <X size={18} />
-              </Button>
+              {/* Image */}
+              <div className="flex-1 flex items-center justify-center p-4 relative">
+                <img
+                  src={imageLoadErrors[images[selectedImageIndex].id] ? placeholderImage : images[selectedImageIndex].url}
+                  alt={images[selectedImageIndex].caption || "Project image"}
+                  className="max-h-full max-w-full object-contain"
+                  onError={() => handleImageError(images[selectedImageIndex].id)}
+                />
+                
+                {/* Navigation buttons */}
+                {images.length > 1 && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute left-4 rounded-full bg-black/30 hover:bg-black/50 text-white"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        goToPrevious();
+                      }}
+                    >
+                      <ChevronLeft className="h-6 w-6" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-4 rounded-full bg-black/30 hover:bg-black/50 text-white"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        goToNext();
+                      }}
+                    >
+                      <ChevronRight className="h-6 w-6" />
+                    </Button>
+                  </>
+                )}
+              </div>
               
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70"
-                onClick={goToPrevious}
-              >
-                <ChevronLeft size={24} />
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70"
-                onClick={goToNext}
-              >
-                <ChevronRight size={24} />
-              </Button>
-              
-              <div className="absolute bottom-0 left-0 right-0 bg-black/70 p-4 text-white">
+              {/* Footer */}
+              <div className="p-4 bg-black/70 text-white">
                 <div className="flex items-start justify-between">
                   <div>
                     <Badge 
-                      className={`${categoryColors[images[selectedImageIndex].category]} text-white border-none mb-2`}
+                      className={`${categoryColors[images[selectedImageIndex].category as keyof typeof categoryColors] || "bg-gray-500"} text-white border-none mb-2`}
                     >
                       {images[selectedImageIndex].category}
                     </Badge>
@@ -171,7 +239,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
                   </div>
                 </div>
                 
-                {editable && onDelete && (
+                {editable && onDelete && !isBuilder && (
                   <div className="mt-4 flex justify-end gap-2">
                     <Button 
                       variant="destructive" 

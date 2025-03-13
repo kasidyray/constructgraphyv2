@@ -3,23 +3,48 @@ import { ProjectImage } from '@/types';
 
 // Get all images for a project
 export async function getProjectImages(projectId: string): Promise<ProjectImage[]> {
-  const { data, error } = await supabase
-    .from('project_images')
-    .select('*')
-    .eq('projectId', projectId)
-    .order('createdAt', { ascending: false });
-  
-  if (error) {
-    console.error('Error fetching project images:', error);
+  try {
+    console.log('Fetching images for project:', projectId);
+    
+    const { data, error } = await supabase
+      .from('project_images')
+      .select('*')
+      .eq('projectId', projectId)
+      .order('createdAt', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching project images:', error);
+      return [];
+    }
+    
+    console.log('Retrieved images:', data?.length || 0);
+    
+    // If no images are found in the database, try to use mock data
+    if (!data || data.length === 0) {
+      console.log('No images found in database, checking mock data');
+      try {
+        // Import mock data dynamically to avoid circular dependencies
+        const { mockProjectImages } = await import('@/data/mockData');
+        const mockImages = mockProjectImages.filter(img => img.projectId === projectId);
+        console.log('Found mock images:', mockImages.length);
+        return mockImages;
+      } catch (err) {
+        console.error('Error loading mock data:', err);
+      }
+    }
+    
+    return data || [];
+  } catch (err) {
+    console.error('Unexpected error in getProjectImages:', err);
     return [];
   }
-  
-  return data || [];
 }
 
 // Upload a single image
 export async function uploadProjectImage(projectId: string, file: File, category: string = 'other'): Promise<ProjectImage | null> {
   try {
+    console.log('Uploading image for project:', projectId);
+    
     // First upload the file to Supabase storage
     const fileName = `${projectId}/${Date.now()}-${file.name}`;
     const { data: fileData, error: fileError } = await supabase.storage
@@ -27,7 +52,7 @@ export async function uploadProjectImage(projectId: string, file: File, category
       .upload(fileName, file);
     
     if (fileError) {
-      console.error('Error uploading file:', fileError);
+      console.error('Error uploading file to storage:', fileError);
       return null;
     }
     
@@ -40,6 +65,8 @@ export async function uploadProjectImage(projectId: string, file: File, category
       console.error('Could not get public URL for uploaded file');
       return null;
     }
+    
+    console.log('File uploaded successfully, public URL:', urlData.publicUrl);
     
     // Create a record in the project_images table
     const newImage = {
@@ -57,10 +84,11 @@ export async function uploadProjectImage(projectId: string, file: File, category
       .single();
     
     if (error) {
-      console.error('Error creating image record:', error);
+      console.error('Error creating image record in database:', error);
       return null;
     }
     
+    console.log('Image record created successfully:', data.id);
     return data;
   } catch (error) {
     console.error('Error in uploadProjectImage:', error);

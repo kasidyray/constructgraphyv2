@@ -5,8 +5,7 @@ import ProjectPhotoFilters from "@/components/project/shared/ProjectPhotoFilters
 import ImageGallery from "@/components/ui/ImageGallery";
 import { toast } from "sonner";
 import { updateProject } from "@/services/projectService";
-import { uploadProjectImages, deleteProjectImage, updateProjectImage } from "@/services/imageService";
-import PhotoUploadDialog from "@/components/project/PhotoUploadDialog";
+import { updateProjectImage } from "@/services/imageService";
 
 interface BuilderProjectViewProps {
   project: Project;
@@ -38,7 +37,6 @@ const BuilderProjectView: React.FC<BuilderProjectViewProps> = ({
   // State for filters
   const [yearFilter, setYearFilter] = useState<string>(currentYear);
   const [monthFilter, setMonthFilter] = useState<string>(currentMonth);
-  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
   // Handle project update
@@ -55,32 +53,6 @@ const BuilderProjectView: React.FC<BuilderProjectViewProps> = ({
     } finally {
       setIsUpdating(false);
     }
-  };
-
-  // Handle image upload
-  const handleImageUpload = async (files: File[], category: string) => {
-    if (!project) return;
-    
-    try {
-      const uploadedImages = await uploadProjectImages(project.id, files, category);
-      if (uploadedImages.length > 0) {
-        onImageUpload(uploadedImages);
-        setUploadDialogOpen(false);
-      }
-    } catch (error) {
-      console.error("Error uploading images:", error);
-      toast.error("Failed to upload images");
-    }
-  };
-
-  // Handle file selection
-  const handleFileSelect = (selectedFiles: File[]) => {
-    if (selectedFiles.length === 0) return;
-    
-    toast.success(`${selectedFiles.length} files selected`);
-    
-    // Use the handleImageUpload function to upload the files
-    handleImageUpload(selectedFiles, 'general');
   };
 
   // Filter images based on selected year and month
@@ -101,8 +73,7 @@ const BuilderProjectView: React.FC<BuilderProjectViewProps> = ({
     <div className="container mx-auto px-4 py-6">
       <ProjectHeader 
         project={project} 
-        onUpdateProject={handleProjectUpdate}
-        isBuilder={true}
+        isAdmin={false}
       />
       
       <div className="mt-8">
@@ -115,12 +86,6 @@ const BuilderProjectView: React.FC<BuilderProjectViewProps> = ({
               monthFilter={monthFilter}
               setMonthFilter={setMonthFilter}
             />
-            <button
-              onClick={() => setUploadDialogOpen(true)}
-              className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
-            >
-              Upload Photos
-            </button>
           </div>
         </div>
         
@@ -129,26 +94,25 @@ const BuilderProjectView: React.FC<BuilderProjectViewProps> = ({
             images={filteredImages} 
             editable={true}
             onDelete={onImageDelete}
-            onUpdate={onImageUpdate}
+            onUpdate={(imageId, updates) => {
+              updateProjectImage(imageId, updates)
+                .then(updatedImage => {
+                  if (updatedImage) {
+                    onImageUpdate(updatedImage);
+                  }
+                })
+                .catch(error => {
+                  console.error("Error updating image:", error);
+                  toast.error("Failed to update image");
+                });
+            }}
           />
         ) : (
           <div className="text-center py-12 border border-dashed rounded-lg">
             <p className="text-muted-foreground mb-4">No photos found for the selected filters</p>
-            <button
-              onClick={() => setUploadDialogOpen(true)}
-              className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
-            >
-              Upload Your First Photo
-            </button>
           </div>
         )}
       </div>
-      
-      <PhotoUploadDialog
-        open={uploadDialogOpen}
-        onOpenChange={setUploadDialogOpen}
-        onFileSelect={handleFileSelect}
-      />
     </div>
   );
 };
