@@ -8,28 +8,34 @@ import ProjectPhotoFilters from "../shared/ProjectPhotoFilters";
 interface AdminProjectMediaTabsProps {
   project: Project;
   projectImages: ProjectImage[];
-  recentImages: ProjectImage[];
+  recentImages?: ProjectImage[];
   yearFilter: string;
   setYearFilter: (value: string) => void;
   monthFilter: string;
   setMonthFilter: (value: string) => void;
-  onUploadComplete: () => void;
+  onUploadClick?: () => void;
+  onUploadComplete?: () => void;
+  onDeleteImage?: (imageId: string) => void;
+  onUpdateImage?: (imageId: string, updates: Partial<ProjectImage>) => void;
 }
 
 const AdminProjectMediaTabs: React.FC<AdminProjectMediaTabsProps> = ({
   project,
   projectImages,
-  recentImages,
+  recentImages = [],
   yearFilter,
   setYearFilter,
   monthFilter,
   setMonthFilter,
+  onUploadClick,
   onUploadComplete,
+  onDeleteImage,
+  onUpdateImage,
 }) => {
   const [activeTab, setActiveTab] = useState("upload");
 
-  // Ensure recentImages is defined
-  const imagesToDisplay = recentImages && recentImages.length > 0 ? recentImages : [];
+  // Use projectImages as fallback if recentImages is not provided
+  const imagesToDisplay = recentImages.length > 0 ? recentImages : projectImages;
 
   return (
     <div className="rounded-lg border bg-card shadow-sm">
@@ -44,14 +50,27 @@ const AdminProjectMediaTabs: React.FC<AdminProjectMediaTabsProps> = ({
           
           <TabsContent value="upload" className="mt-0">
             <div className="mt-2">
-              <PhotoUploader 
-                projectId={project.id} 
-                onUploadComplete={() => {
-                  onUploadComplete();
-                  // Switch to photos tab after upload
-                  setActiveTab("photos");
-                }} 
-              />
+              {onUploadClick ? (
+                <div className="flex justify-center">
+                  <button
+                    onClick={onUploadClick}
+                    className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
+                  >
+                    Upload Photos
+                  </button>
+                </div>
+              ) : (
+                <PhotoUploader 
+                  projectId={project.id} 
+                  onUploadComplete={() => {
+                    if (onUploadComplete) {
+                      onUploadComplete();
+                    }
+                    // Switch to photos tab after upload
+                    setActiveTab("photos");
+                  }} 
+                />
+              )}
             </div>
           </TabsContent>
           
@@ -70,6 +89,9 @@ const AdminProjectMediaTabs: React.FC<AdminProjectMediaTabsProps> = ({
                 <ImageGallery 
                   images={imagesToDisplay} 
                   className="grid-cols-3"
+                  editable={!!onDeleteImage || !!onUpdateImage}
+                  onDelete={onDeleteImage}
+                  onUpdate={onUpdateImage}
                 />
               ) : (
                 <div className="flex h-40 items-center justify-center rounded-md border border-dashed">

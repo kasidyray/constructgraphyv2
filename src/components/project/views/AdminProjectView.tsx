@@ -117,19 +117,6 @@ const AdminProjectView: React.FC<AdminProjectViewProps> = ({
     }
   };
 
-  // Refresh project images
-  const refreshProjectImages = async () => {
-    if (project) {
-      try {
-        const images = await getProjectImages(project.id);
-        onImageUpload(images);
-      } catch (error) {
-        console.error("Error refreshing project images:", error);
-        toast.error("Failed to refresh images");
-      }
-    }
-  };
-
   // Handle image delete
   const handleImageDelete = async (imageId: string) => {
     try {
@@ -163,6 +150,20 @@ const AdminProjectView: React.FC<AdminProjectViewProps> = ({
     handleImageUpload(selectedFiles, 'general');
   };
 
+  // Refresh project images
+  const refreshProjectImages = async () => {
+    if (project) {
+      try {
+        const images = await getProjectImages(project.id);
+        onImageUpload(images);
+        toast.success("Images refreshed successfully");
+      } catch (error) {
+        console.error("Error refreshing project images:", error);
+        toast.error("Failed to refresh images");
+      }
+    }
+  };
+
   return (
     <>
       <div className="container py-8">
@@ -179,13 +180,16 @@ const AdminProjectView: React.FC<AdminProjectViewProps> = ({
             
             <AdminProjectMediaTabs
               project={project}
-              projectImages={projectImages}
+              projectImages={filteredImages}
               recentImages={recentImages}
               yearFilter={yearFilter}
               setYearFilter={setYearFilter}
               monthFilter={monthFilter}
               setMonthFilter={setMonthFilter}
-              onUploadComplete={() => refreshProjectImages()}
+              onUploadClick={() => setUploadDialogOpen(true)}
+              onUploadComplete={refreshProjectImages}
+              onDeleteImage={handleImageDelete}
+              onUpdateImage={handleImageUpdate}
             />
           </div>
           
