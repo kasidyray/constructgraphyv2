@@ -22,6 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import PhotoUploader from "./admin/PhotoUploader";
 
 interface ProjectOverviewProps {
   project: Project;
@@ -511,6 +512,19 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
                 </div>
               )}
             </div>
+            
+            {isAdmin && (
+              <div className="mt-6 pt-6 border-t">
+                <h3 className="text-lg font-medium mb-4">Upload New Photos</h3>
+                <PhotoUploader 
+                  projectId={project.id} 
+                  onUploadComplete={() => {
+                    // Refresh the project images
+                    handleUploadButtonClick();
+                  }} 
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
