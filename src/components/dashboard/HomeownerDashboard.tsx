@@ -1,11 +1,10 @@
-
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProjectList from "@/components/dashboard/ProjectList";
-import { User } from "@/types";
-import { getHomeownerProjects } from "@/data/mockData";
+import { User, Project } from "@/types";
+import { getHomeownerProjects } from "@/services/projectService";
 
 interface HomeownerDashboardProps {
   user: User;
@@ -14,7 +13,27 @@ interface HomeownerDashboardProps {
 const HomeownerDashboard: React.FC<HomeownerDashboardProps> = ({
   user
 }) => {
-  const userProjects = getHomeownerProjects(user.id);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        setLoading(true);
+        const userProjects = await getHomeownerProjects(user.id);
+        setProjects(userProjects);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching homeowner projects:", err);
+        setError("Failed to load projects. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, [user.id]);
 
   return (
     <div className="container py-8">
@@ -34,7 +53,18 @@ const HomeownerDashboard: React.FC<HomeownerDashboardProps> = ({
         </Button>
       </div>
 
-      <ProjectList projects={userProjects} />
+      {loading ? (
+        <div className="flex h-64 items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2">Loading projects...</span>
+        </div>
+      ) : error ? (
+        <div className="rounded-lg border border-destructive p-4 text-center text-destructive">
+          <p>{error}</p>
+        </div>
+      ) : (
+        <ProjectList projects={projects} />
+      )}
     </div>
   );
 };

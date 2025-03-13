@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Eye, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { User } from "@/types";
-import { getHomeownerProjects } from "@/data/mockData";
+import { User, Project } from "@/types";
+import { getProjects } from "@/services/projectService";
 
 interface HomeownerTableProps {
   homeowners: User[];
@@ -17,6 +17,23 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({
   onHomeownerSelect
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const allProjects = await getProjects();
+        setProjects(allProjects);
+      } catch (err) {
+        console.error("Error fetching projects:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProjects();
+  }, []);
   
   const filteredHomeowners = homeowners.filter(homeowner => 
     homeowner.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -25,7 +42,7 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({
 
   // Get the correct number of projects for a homeowner
   const getHomeownerProjectCount = (homeownerId: string): number => {
-    return getHomeownerProjects(homeownerId).length;
+    return projects.filter(project => project.homeownerId === homeownerId).length;
   };
 
   return <Card>

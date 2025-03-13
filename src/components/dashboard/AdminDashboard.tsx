@@ -1,25 +1,54 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, UserPlus } from "lucide-react";
+import { Plus, UserPlus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { User } from "@/types";
+import { User, Project } from "@/types";
 import StatCards from "@/components/dashboard/StatCards";
 import HomeownerTable from "@/components/dashboard/HomeownerTable";
 import BuilderTable from "@/components/dashboard/BuilderTable";
 import NewUserDialog from "@/components/dashboard/NewUserDialog";
 import NewProjectDialog from "@/components/dashboard/NewProjectDialog";
-import { mockUsers, mockProjects } from "@/data/mockData";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getUsers } from "@/services/userService";
+import { getProjects } from "@/services/projectService";
 
 const AdminDashboard: React.FC = () => {
   const [selectedHomeowner, setSelectedHomeowner] = useState<User | null>(null);
   const [selectedBuilder, setSelectedBuilder] = useState<User | null>(null);
   const [showNewUserDialog, setShowNewUserDialog] = useState(false);
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
+  const [homeowners, setHomeowners] = useState<User[]>([]);
+  const [builders, setBuilders] = useState<User[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   
-  const homeowners = mockUsers.filter(user => user.role === "homeowner");
-  const builders = mockUsers.filter(user => user.role === "builder");
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch users
+        const users = await getUsers();
+        setHomeowners(users.filter(user => user.role === "homeowner"));
+        setBuilders(users.filter(user => user.role === "builder"));
+        
+        // Fetch projects
+        const allProjects = await getProjects();
+        setProjects(allProjects);
+        
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError("Failed to load data. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleHomeownerSelect = (homeowner: User) => {
     setSelectedHomeowner(homeowner);
@@ -32,6 +61,25 @@ const AdminDashboard: React.FC = () => {
     // Navigate to builder's projects page to show all projects for homeowners linked with this builder
     navigate(`/builder/${builder.id}/projects`);
   };
+
+  if (loading) {
+    return (
+      <div className="container flex h-64 items-center justify-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Loading dashboard...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container py-8">
+        <div className="rounded-lg border border-destructive p-4 text-center text-destructive">
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-8">
@@ -53,7 +101,7 @@ const AdminDashboard: React.FC = () => {
         </div>
       </div>
       
-      <StatCards projects={mockProjects} />
+      <StatCards projects={projects} />
       
       <Tabs defaultValue="homeowners" className="mt-6">
         <TabsList>

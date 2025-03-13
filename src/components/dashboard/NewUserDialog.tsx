@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { User, UserRole } from "@/types";
-import { mockUsers } from "@/data/mockData";
+import { createUser } from "@/services/userService";
 
 interface NewUserDialogProps {
   open: boolean;
@@ -26,71 +26,90 @@ const NewUserDialog: React.FC<NewUserDialogProps> = ({
   const [builderEmail, setBuilderEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [builderPhoneNumber, setBuilderPhoneNumber] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     
-    if (activeTab === "homeowner") {
-      if (!firstName || !lastName || !email || !phoneNumber) {
-        toast({
-          title: "Error",
-          description: "Please fill all fields",
-          variant: "destructive",
-        });
-        return;
+    try {
+      if (activeTab === "homeowner") {
+        if (!firstName || !lastName || !email || !phoneNumber) {
+          toast({
+            title: "Error",
+            description: "Please fill all fields",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Create new homeowner
+        const newUser: Omit<User, "id" | "createdAt"> = {
+          name: `${firstName} ${lastName}`,
+          email,
+          phone: phoneNumber,
+          role: "homeowner" as UserRole,
+        };
+        
+        // Add to database
+        const createdUser = await createUser(newUser);
+        
+        if (createdUser) {
+          toast({
+            title: "Success",
+            description: "Homeowner created successfully",
+          });
+          
+          // Reset form and close dialog
+          resetForm();
+          onOpenChange(false);
+        } else {
+          throw new Error("Failed to create homeowner");
+        }
+      } else {
+        if (!nameBuilder || !builderEmail || !builderPhoneNumber) {
+          toast({
+            title: "Error",
+            description: "Please fill all fields",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Create new builder
+        const newUser: Omit<User, "id" | "createdAt"> = {
+          name: nameBuilder,
+          email: builderEmail,
+          phone: builderPhoneNumber,
+          role: "builder" as UserRole,
+        };
+        
+        // Add to database
+        const createdUser = await createUser(newUser);
+        
+        if (createdUser) {
+          toast({
+            title: "Success",
+            description: "Builder created successfully",
+          });
+          
+          // Reset form and close dialog
+          resetForm();
+          onOpenChange(false);
+        } else {
+          throw new Error("Failed to create builder");
+        }
       }
-      
-      // Create new homeowner
-      const newUser: User = {
-        id: uuidv4(),
-        name: `${firstName} ${lastName}`,
-        email,
-        phone: phoneNumber,
-        role: "homeowner" as UserRole,
-        createdAt: new Date(),
-        projects: [],
-      };
-      
-      // Add to mock data
-      mockUsers.push(newUser);
-      
+    } catch (error) {
+      console.error("Error creating user:", error);
       toast({
-        title: "Success",
-        description: "Homeowner created successfully",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create user",
+        variant: "destructive",
       });
-    } else {
-      if (!nameBuilder || !builderEmail || !builderPhoneNumber) {
-        toast({
-          title: "Error",
-          description: "Please fill all fields",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Create new builder
-      const newUser: User = {
-        id: uuidv4(),
-        name: nameBuilder,
-        email: builderEmail,
-        phone: builderPhoneNumber,
-        role: "builder" as UserRole,
-        createdAt: new Date(),
-        projects: [],
-      };
-      
-      // Add to mock data
-      mockUsers.push(newUser);
-      
-      toast({
-        title: "Success",
-        description: "Builder created successfully",
-      });
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    // Reset form and close dialog
-    resetForm();
-    onOpenChange(false);
   };
   
   const resetForm = () => {
@@ -204,7 +223,16 @@ const NewUserDialog: React.FC<NewUserDialogProps> = ({
               <Button type="button" variant="outline" className="mr-2" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit">Create User</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <span className="mr-2">Creating...</span>
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  </>
+                ) : (
+                  "Create User"
+                )}
+              </Button>
             </div>
           </form>
         </Tabs>

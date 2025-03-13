@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Eye, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { User } from "@/types";
-import { getBuilderProjects } from "@/data/mockData";
+import { User, Project } from "@/types";
+import { getProjects } from "@/services/projectService";
 
 interface BuilderTableProps {
   builders: User[];
@@ -17,6 +17,23 @@ const BuilderTable: React.FC<BuilderTableProps> = ({
   onBuilderSelect
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const allProjects = await getProjects();
+        setProjects(allProjects);
+      } catch (err) {
+        console.error("Error fetching projects:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProjects();
+  }, []);
   
   const filteredBuilders = builders.filter(builder => 
     builder.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -25,7 +42,7 @@ const BuilderTable: React.FC<BuilderTableProps> = ({
 
   // Calculate the number of projects each builder is handling
   const getBuilderProjectCount = (builderId: string): number => {
-    return getBuilderProjects(builderId).length;
+    return projects.filter(project => project.builderId === builderId).length;
   };
 
   return <Card>

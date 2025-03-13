@@ -6,7 +6,7 @@ export interface User {
   name: string;
   role: UserRole;
   avatar?: string;
-  createdAt: Date;
+  createdAt: Date | string;
   projects?: Project[];
   phone?: string;
   builderId?: string;
@@ -22,8 +22,8 @@ export interface Project {
   homeownerId: string;
   homeownerName: string;
   builderId?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | string;
+  updatedAt: Date | string;
   thumbnail?: string;
   progress: number; // 0-100
 }
@@ -33,7 +33,7 @@ export interface ProjectImage {
   projectId: string;
   url: string;
   caption: string;
-  createdAt: Date;
+  createdAt: Date | string;
   category: "interior" | "exterior" | "structural" | "finishes" | "other";
 }
 

@@ -1,8 +1,7 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { AuthContextType, User } from "@/types";
-import { mockLogin } from "@/data/mockData";
 import { toast } from "@/components/ui/use-toast";
+import { getUserByEmail } from "@/services/userService";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -34,10 +33,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      // Simulate API request delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      
-      const user = mockLogin(email, password);
+      // In a real app, you would validate the password here
+      // For now, we're just checking if the user exists in the database
+      const user = await getUserByEmail(email);
       
       if (user) {
         localStorage.setItem("user", JSON.stringify(user));

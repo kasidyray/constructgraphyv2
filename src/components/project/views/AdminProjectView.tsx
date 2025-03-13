@@ -5,11 +5,16 @@ import ProjectOverview from "@/components/project/ProjectOverview";
 import PhotoUploadDialog from "@/components/project/PhotoUploadDialog";
 import AdminProjectMediaTabs from "@/components/project/admin/AdminProjectMediaTabs";
 import { toast } from "sonner";
+import { updateProject } from "@/services/projectService";
+import { uploadProjectImages, deleteProjectImage, updateProjectImage } from "@/services/imageService";
 
 interface AdminProjectViewProps {
   project: Project;
   projectImages: ProjectImage[];
-  refreshProjectImages: () => Promise<void>;
+  onProjectUpdate: (updatedProject: Project) => void;
+  onImageUpload: (newImages: ProjectImage[]) => void;
+  onImageDelete: (deletedImageId: string) => void;
+  onImageUpdate: (updatedImage: ProjectImage) => void;
 }
 
 const MONTHS = [
@@ -20,7 +25,10 @@ const MONTHS = [
 const AdminProjectView: React.FC<AdminProjectViewProps> = ({
   project,
   projectImages,
-  refreshProjectImages,
+  onProjectUpdate,
+  onImageUpload,
+  onImageDelete,
+  onImageUpdate,
 }) => {
   // Get current year and month for default filters
   const currentDate = new Date();
@@ -32,6 +40,7 @@ const AdminProjectView: React.FC<AdminProjectViewProps> = ({
   const [uploading, setUploading] = useState(false);
   const [yearFilter, setYearFilter] = useState<string>(currentYear);
   const [monthFilter, setMonthFilter] = useState<string>(currentMonth);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Filter images based on selected year and month
   const filteredImages = useMemo(() => {
@@ -70,7 +79,78 @@ const AdminProjectView: React.FC<AdminProjectViewProps> = ({
     setSelectedFiles([]);
     
     // Refresh project images after upload
-    refreshProjectImages();
+    onImageUpload(selectedFiles.map(file => ({
+      id: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      url: URL.createObjectURL(file),
+      category: 'general'
+    })));
+  };
+
+  // Handle project update
+  const handleProjectUpdate = async (updatedProjectData: Partial<Project>) => {
+    if (!project) return;
+    
+    setIsUpdating(true);
+    try {
+      const updatedProject = await updateProject(project.id, updatedProjectData);
+      onProjectUpdate(updatedProject);
+    } catch (error) {
+      console.error("Error updating project:", error);
+      toast.error("Failed to update project");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Handle image upload
+  const handleImageUpload = async (files: File[], category: string) => {
+    if (!project) return;
+    
+    try {
+      const uploadedImages = await uploadProjectImages(project.id, files, category);
+      if (uploadedImages.length > 0) {
+        onImageUpload(uploadedImages);
+        setUploadDialogOpen(false);
+      }
+    } catch (error) {
+      console.error("Error uploading images:", error);
+      toast.error("Failed to upload images");
+    }
+  };
+
+  // Handle image delete
+  const handleImageDelete = async (imageId: string) => {
+    try {
+      await deleteProjectImage(imageId);
+      onImageDelete(imageId);
+      toast.success("Image deleted successfully");
+    } catch (error) {
+      console.error("Error deleting image:", error);
+      toast.error("Failed to delete image");
+    }
+  };
+
+  // Handle image update
+  const handleImageUpdate = async (imageId: string, updates: Partial<ProjectImage>) => {
+    try {
+      const updatedImage = await updateProjectImage(imageId, updates);
+      onImageUpdate(updatedImage);
+    } catch (error) {
+      console.error("Error updating image:", error);
+      toast.error("Failed to update image");
+    }
+  };
+
+  // Handle file selection
+  const handleFileSelect = (selectedFiles: File[]) => {
+    if (selectedFiles.length === 0) return;
+    
+    toast.success(`${selectedFiles.length} files selected`);
+    
+    // Use the handleImageUpload function to upload the files
+    handleImageUpload(selectedFiles, 'general');
   };
 
   return (
@@ -87,15 +167,16 @@ const AdminProjectView: React.FC<AdminProjectViewProps> = ({
               </div>
             </div>
             
-            <AdminProjectMediaTabs 
+            <AdminProjectMediaTabs
               project={project}
-              projectImages={projectImages}
-              recentImages={recentImages}
+              projectImages={filteredImages}
               yearFilter={yearFilter}
               setYearFilter={setYearFilter}
               monthFilter={monthFilter}
               setMonthFilter={setMonthFilter}
-              onUploadComplete={refreshProjectImages}
+              onUploadClick={() => setUploadDialogOpen(true)}
+              onDeleteImage={handleImageDelete}
+              onUpdateImage={handleImageUpdate}
             />
           </div>
           

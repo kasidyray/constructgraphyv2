@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -10,9 +9,16 @@ import { Progress } from "@/components/ui/progress";
 interface ProjectCardProps {
   project: Project;
   className?: string;
+  isAdmin?: boolean;
+  isBuilder?: boolean;
 }
 
-const ProjectCard: React.FC<ProjectCardProps> = ({ project, className = "" }) => {
+const ProjectCard: React.FC<ProjectCardProps> = ({ 
+  project, 
+  className = "",
+  isAdmin = false,
+  isBuilder = false
+}) => {
   const statusColors = {
     "planning": "bg-blue-500",
     "in-progress": "bg-amber-500",
@@ -20,7 +26,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, className = "" }) =>
     "on-hold": "bg-gray-500",
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: Date | string) => {
     return new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",

@@ -3,8 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import AuthLayout from "@/components/layout/AuthLayout";
 import { useAuth } from "@/contexts/AuthContext";
-import { mockProjects } from "@/data/mockData";
-import { getProjectImagesApi } from "@/data/mockApi";
 import { Project, ProjectImage } from "@/types";
 import ProjectLoading from "@/components/project/ProjectLoading";
 import { 
@@ -12,6 +10,8 @@ import {
   BuilderProjectView, 
   HomeownerProjectView 
 } from "@/components/project/views";
+import { getProjectById } from "@/services/projectService";
+import { getProjectImages } from "@/services/imageService";
 
 const ProjectDetails: React.FC = () => {
   const { id } = useParams<{ id: string; }>();
@@ -22,44 +22,70 @@ const ProjectDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate loading data from an API
-    setLoading(true);
-    const fetchProject = async () => {
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
-      const foundProject = mockProjects.find(p => p.id === id);
-      if (!foundProject) {
-        navigate("/projects");
-        return;
-      }
+    if (!id) {
+      navigate("/projects");
+      return;
+    }
 
-      // Check if homeowner has access to this project
-      if (user?.role === "homeowner" && foundProject.homeownerId !== user.id) {
-        navigate("/dashboard");
-        return;
-      }
-      setProject(foundProject);
-      
-      // Fetch project images using our mock API
-      if (id) {
-        try {
-          const images = await getProjectImagesApi(id);
-          setProjectImages(images);
-        } catch (error) {
-          console.error("Error fetching project images:", error);
-          toast.error("Failed to load project images");
+    const fetchProjectData = async () => {
+      setLoading(true);
+      try {
+        // Fetch project details
+        const foundProject = await getProjectById(id);
+        
+        if (!foundProject) {
+          toast.error("Project not found");
+          navigate("/projects");
+          return;
         }
-      }
-      
-      setLoading(false);
-    };
-    fetchProject();
-  }, [id, navigate, user]);
 
-  // Function to refresh project images
+        // Check if homeowner has access to this project
+        if (user?.role === "homeowner" && foundProject.homeownerId !== user.id) {
+          toast.error("You don't have access to this project");
+          navigate("/dashboard");
+          return;
+        }
+        
+        setProject(foundProject);
+        
+        // Fetch project images
+        const images = await getProjectImages(id);
+        setProjectImages(images);
+      } catch (error) {
+        console.error("Error fetching project data:", error);
+        toast.error("Failed to load project data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjectData();
+  }, [id, user, navigate]);
+
+  const handleProjectUpdate = (updatedProject: Project) => {
+    setProject(updatedProject);
+    toast.success("Project updated successfully");
+  };
+
+  const handleImageUpload = (newImages: ProjectImage[]) => {
+    setProjectImages(prev => [...newImages, ...prev]);
+    toast.success(`${newImages.length} image${newImages.length === 1 ? '' : 's'} uploaded successfully`);
+  };
+
+  const handleImageDelete = (deletedImageId: string) => {
+    setProjectImages(prev => prev.filter(img => img.id !== deletedImageId));
+  };
+
+  const handleImageUpdate = (updatedImage: ProjectImage) => {
+    setProjectImages(prev => 
+      prev.map(img => img.id === updatedImage.id ? updatedImage : img)
+    );
+  };
+
   const refreshProjectImages = async () => {
     if (id) {
       try {
-        const images = await getProjectImagesApi(id);
+        const images = await getProjectImages(id);
         setProjectImages(images);
       } catch (error) {
         console.error("Error refreshing project images:", error);
@@ -67,45 +93,45 @@ const ProjectDetails: React.FC = () => {
     }
   };
 
-  if (loading || !project) {
-    return <ProjectLoading />;
+  if (loading) {
+    return (
+      <AuthLayout>
+        <ProjectLoading />
+      </AuthLayout>
+    );
+  }
+
+  if (!project) {
+    return null; // This should never happen as we redirect in the useEffect
   }
 
   // Render the appropriate view based on user role
-  const renderRoleSpecificView = () => {
-    if (!user) return null;
-
-    switch (user.role) {
-      case "admin":
-        return (
-          <AdminProjectView 
-            project={project} 
-            projectImages={projectImages} 
-            refreshProjectImages={refreshProjectImages} 
-          />
-        );
-      case "builder":
-        return (
-          <BuilderProjectView 
-            project={project} 
-            projectImages={projectImages} 
-          />
-        );
-      case "homeowner":
-        return (
-          <HomeownerProjectView 
-            project={project} 
-            projectImages={projectImages} 
-          />
-        );
-      default:
-        return null;
-    }
-  };
-
   return (
     <AuthLayout>
-      {renderRoleSpecificView()}
+      {user?.role === "admin" ? (
+        <AdminProjectView 
+          project={project} 
+          projectImages={projectImages}
+          onProjectUpdate={handleProjectUpdate}
+          onImageUpload={handleImageUpload}
+          onImageDelete={handleImageDelete}
+          onImageUpdate={handleImageUpdate}
+        />
+      ) : user?.role === "builder" ? (
+        <BuilderProjectView 
+          project={project} 
+          projectImages={projectImages}
+          onProjectUpdate={handleProjectUpdate}
+          onImageUpload={handleImageUpload}
+          onImageDelete={handleImageDelete}
+          onImageUpdate={handleImageUpdate}
+        />
+      ) : (
+        <HomeownerProjectView 
+          project={project} 
+          projectImages={projectImages} 
+        />
+      )}
     </AuthLayout>
   );
 };

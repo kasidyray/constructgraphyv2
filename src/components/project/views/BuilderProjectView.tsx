@@ -3,10 +3,18 @@ import { Project, ProjectImage } from "@/types";
 import ProjectHeader from "@/components/project/ProjectHeader";
 import ProjectPhotoFilters from "@/components/project/shared/ProjectPhotoFilters";
 import ImageGallery from "@/components/ui/ImageGallery";
+import { toast } from "sonner";
+import { updateProject } from "@/services/projectService";
+import { uploadProjectImages, deleteProjectImage, updateProjectImage } from "@/services/imageService";
+import PhotoUploadDialog from "@/components/project/PhotoUploadDialog";
 
 interface BuilderProjectViewProps {
   project: Project;
   projectImages: ProjectImage[];
+  onProjectUpdate: (updatedProject: Project) => void;
+  onImageUpload: (newImages: ProjectImage[]) => void;
+  onImageDelete: (deletedImageId: string) => void;
+  onImageUpdate: (updatedImage: ProjectImage) => void;
 }
 
 const MONTHS = [
@@ -17,6 +25,10 @@ const MONTHS = [
 const BuilderProjectView: React.FC<BuilderProjectViewProps> = ({
   project,
   projectImages,
+  onProjectUpdate,
+  onImageUpload,
+  onImageDelete,
+  onImageUpdate,
 }) => {
   // Get current year and month for default filters
   const currentDate = new Date();
@@ -26,103 +38,117 @@ const BuilderProjectView: React.FC<BuilderProjectViewProps> = ({
   // State for filters
   const [yearFilter, setYearFilter] = useState<string>(currentYear);
   const [monthFilter, setMonthFilter] = useState<string>(currentMonth);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // Handle project update
+  const handleProjectUpdate = async (updatedProjectData: Partial<Project>) => {
+    if (!project) return;
+    
+    setIsUpdating(true);
+    try {
+      const updatedProject = await updateProject(project.id, updatedProjectData);
+      onProjectUpdate(updatedProject);
+    } catch (error) {
+      console.error("Error updating project:", error);
+      toast.error("Failed to update project");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Handle image upload
+  const handleImageUpload = async (files: File[], category: string) => {
+    if (!project) return;
+    
+    try {
+      const uploadedImages = await uploadProjectImages(project.id, files, category);
+      if (uploadedImages.length > 0) {
+        onImageUpload(uploadedImages);
+        setUploadDialogOpen(false);
+      }
+    } catch (error) {
+      console.error("Error uploading images:", error);
+      toast.error("Failed to upload images");
+    }
+  };
+
+  // Handle file selection
+  const handleFileSelect = (selectedFiles: File[]) => {
+    if (selectedFiles.length === 0) return;
+    
+    toast.success(`${selectedFiles.length} files selected`);
+    
+    // Use the handleImageUpload function to upload the files
+    handleImageUpload(selectedFiles, 'general');
+  };
 
   // Filter images based on selected year and month
   const filteredImages = useMemo(() => {
     return projectImages.filter(image => {
-      const date = new Date(image.createdAt);
-      const imageYear = date.getFullYear().toString();
-      const imageMonth = date.toLocaleString('default', { month: 'long' });
+      const imageDate = new Date(image.createdAt);
+      const imageYear = imageDate.getFullYear().toString();
+      const imageMonth = MONTHS[imageDate.getMonth()];
       
-      const yearMatch = yearFilter === "all" || imageYear === yearFilter;
-      const monthMatch = monthFilter === "all" || imageMonth === monthFilter;
+      const yearMatch = yearFilter === 'All' || imageYear === yearFilter;
+      const monthMatch = monthFilter === 'All' || imageMonth === monthFilter;
       
       return yearMatch && monthMatch;
     });
   }, [projectImages, yearFilter, monthFilter]);
 
-  // Get the most recent images for display
-  const recentImages = useMemo(() => {
-    return [...filteredImages]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [filteredImages]);
-  
   return (
-    <div className="container py-8">
-      <ProjectHeader project={project} isAdmin={false} />
+    <div className="container mx-auto px-4 py-6">
+      <ProjectHeader 
+        project={project} 
+        onUpdateProject={handleProjectUpdate}
+        isBuilder={true}
+      />
       
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 mt-6">
-        <div className="col-span-2 space-y-6">
-          <div className="rounded-lg border bg-card shadow-sm">
-            <div className="p-6">
-              <h2 className="mb-4 text-xl font-semibold">Description</h2>
-              <p className="text-muted-foreground">{project.description}</p>
-            </div>
-          </div>
-          
-          <div className="rounded-lg border bg-card shadow-sm">
-            <div className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Project Media</h2>
-              
-              <div className="flex items-center justify-between mb-4">
-                <ProjectPhotoFilters
-                  yearFilter={yearFilter}
-                  setYearFilter={setYearFilter}
-                  monthFilter={monthFilter}
-                  setMonthFilter={setMonthFilter}
-                />
-              </div>
-              
-              <div className="mt-4">
-                {recentImages.length > 0 ? (
-                  <ImageGallery 
-                    images={recentImages} 
-                    className="grid-cols-3"
-                  />
-                ) : (
-                  <div className="flex h-40 items-center justify-center rounded-md border border-dashed">
-                    <p className="text-muted-foreground">No images match the selected filters</p>
-                  </div>
-                )}
-              </div>
-            </div>
+      <div className="mt-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+          <h2 className="text-2xl font-bold mb-4 md:mb-0">Project Photos</h2>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <ProjectPhotoFilters
+              yearFilter={yearFilter}
+              setYearFilter={setYearFilter}
+              monthFilter={monthFilter}
+              setMonthFilter={setMonthFilter}
+            />
+            <button
+              onClick={() => setUploadDialogOpen(true)}
+              className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
+            >
+              Upload Photos
+            </button>
           </div>
         </div>
         
-        <div className="space-y-6">
-          <div className="rounded-lg border bg-card shadow-sm">
-            <div className="p-6">
-              <h2 className="mb-4 text-xl font-semibold">Project Details</h2>
-              <dl className="space-y-4">
-                <div>
-                  <dt className="text-sm font-medium text-muted-foreground">Status</dt>
-                  <dd className="mt-1 capitalize">{project.status.replace("-", " ")}</dd>
-                </div>
-                <hr className="my-2" />
-                <div>
-                  <dt className="text-sm font-medium text-muted-foreground">Homeowner</dt>
-                  <dd className="mt-1">{project.homeownerName}</dd>
-                </div>
-                <hr className="my-2" />
-                <div>
-                  <dt className="text-sm font-medium text-muted-foreground">Address</dt>
-                  <dd className="mt-1">{project.address}</dd>
-                </div>
-                <hr className="my-2" />
-                <div>
-                  <dt className="text-sm font-medium text-muted-foreground">Created On</dt>
-                  <dd className="mt-1">{new Date(project.createdAt).toLocaleDateString()}</dd>
-                </div>
-                <hr className="my-2" />
-                <div>
-                  <dt className="text-sm font-medium text-muted-foreground">Last Updated</dt>
-                  <dd className="mt-1">{new Date(project.updatedAt).toLocaleDateString()}</dd>
-                </div>
-              </dl>
-            </div>
+        {filteredImages.length > 0 ? (
+          <ImageGallery 
+            images={filteredImages} 
+            editable={true}
+            onDelete={onImageDelete}
+            onUpdate={onImageUpdate}
+          />
+        ) : (
+          <div className="text-center py-12 border border-dashed rounded-lg">
+            <p className="text-muted-foreground mb-4">No photos found for the selected filters</p>
+            <button
+              onClick={() => setUploadDialogOpen(true)}
+              className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
+            >
+              Upload Your First Photo
+            </button>
           </div>
-        </div>
+        )}
       </div>
+      
+      <PhotoUploadDialog
+        open={uploadDialogOpen}
+        onOpenChange={setUploadDialogOpen}
+        onFileSelect={handleFileSelect}
+      />
     </div>
   );
 };
