@@ -31,8 +31,8 @@ A modern construction project management application built with React, TypeScrip
 
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/constography_v1.git
-cd constography_v1
+git clone https://github.com/kasidyray/constructgraphy_v1.git
+cd constructgraphy_v1
 ```
 
 2. Install dependencies
