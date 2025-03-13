@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { ProjectImage } from "@/types";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -34,7 +33,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ images, className = "" }) =
     }
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: Date | string) => {
     return new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",

@@ -6,7 +6,7 @@ import PhotoUploadDialog from "@/components/project/PhotoUploadDialog";
 import AdminProjectMediaTabs from "@/components/project/admin/AdminProjectMediaTabs";
 import { toast } from "sonner";
 import { updateProject } from "@/services/projectService";
-import { uploadProjectImages, deleteProjectImage, updateProjectImage } from "@/services/imageService";
+import { uploadProjectImages, deleteProjectImage, updateProjectImage, getProjectImages } from "@/services/imageService";
 
 interface AdminProjectViewProps {
   project: Project;
@@ -71,21 +71,18 @@ const AdminProjectView: React.FC<AdminProjectViewProps> = ({
     if (selectedFiles.length === 0) return;
     setUploading(true);
 
-    // Simulate upload
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    toast.success(`Successfully uploaded ${selectedFiles.length} photo${selectedFiles.length > 1 ? 's' : ''}`);
-    setUploading(false);
-    setUploadDialogOpen(false);
-    setSelectedFiles([]);
-    
-    // Refresh project images after upload
-    onImageUpload(selectedFiles.map(file => ({
-      id: '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      url: URL.createObjectURL(file),
-      category: 'general'
-    })));
+    try {
+      // Use the handleImageUpload function to upload the files
+      await handleImageUpload(selectedFiles, 'general');
+      toast.success(`Successfully uploaded ${selectedFiles.length} photo${selectedFiles.length > 1 ? 's' : ''}`);
+    } catch (error) {
+      console.error("Error uploading files:", error);
+      toast.error("Failed to upload files");
+    } finally {
+      setUploading(false);
+      setUploadDialogOpen(false);
+      setSelectedFiles([]);
+    }
   };
 
   // Handle project update
@@ -117,6 +114,19 @@ const AdminProjectView: React.FC<AdminProjectViewProps> = ({
     } catch (error) {
       console.error("Error uploading images:", error);
       toast.error("Failed to upload images");
+    }
+  };
+
+  // Refresh project images
+  const refreshProjectImages = async () => {
+    if (project) {
+      try {
+        const images = await getProjectImages(project.id);
+        onImageUpload(images);
+      } catch (error) {
+        console.error("Error refreshing project images:", error);
+        toast.error("Failed to refresh images");
+      }
     }
   };
 
@@ -169,14 +179,13 @@ const AdminProjectView: React.FC<AdminProjectViewProps> = ({
             
             <AdminProjectMediaTabs
               project={project}
-              projectImages={filteredImages}
+              projectImages={projectImages}
+              recentImages={recentImages}
               yearFilter={yearFilter}
               setYearFilter={setYearFilter}
               monthFilter={monthFilter}
               setMonthFilter={setMonthFilter}
-              onUploadClick={() => setUploadDialogOpen(true)}
-              onDeleteImage={handleImageDelete}
-              onUpdateImage={handleImageUpdate}
+              onUploadComplete={() => refreshProjectImages()}
             />
           </div>
           

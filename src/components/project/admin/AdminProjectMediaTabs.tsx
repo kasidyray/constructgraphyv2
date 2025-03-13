@@ -28,6 +28,9 @@ const AdminProjectMediaTabs: React.FC<AdminProjectMediaTabsProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState("upload");
 
+  // Ensure recentImages is defined
+  const imagesToDisplay = recentImages && recentImages.length > 0 ? recentImages : [];
+
   return (
     <div className="rounded-lg border bg-card shadow-sm">
       <div className="p-6">
@@ -63,9 +66,9 @@ const AdminProjectMediaTabs: React.FC<AdminProjectMediaTabsProps> = ({
             </div>
             
             <div className="mt-4">
-              {recentImages.length > 0 ? (
+              {imagesToDisplay.length > 0 ? (
                 <ImageGallery 
-                  images={recentImages} 
+                  images={imagesToDisplay} 
                   className="grid-cols-3"
                 />
               ) : (
