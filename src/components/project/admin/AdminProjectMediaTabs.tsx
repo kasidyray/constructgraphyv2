@@ -50,27 +50,16 @@ const AdminProjectMediaTabs: React.FC<AdminProjectMediaTabsProps> = ({
           
           <TabsContent value="upload" className="mt-0">
             <div className="mt-2">
-              {onUploadClick ? (
-                <div className="flex justify-center">
-                  <button
-                    onClick={onUploadClick}
-                    className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
-                  >
-                    Upload Photos
-                  </button>
-                </div>
-              ) : (
-                <PhotoUploader 
-                  projectId={project.id} 
-                  onUploadComplete={() => {
-                    if (onUploadComplete) {
-                      onUploadComplete();
-                    }
-                    // Switch to photos tab after upload
-                    setActiveTab("photos");
-                  }} 
-                />
-              )}
+              <PhotoUploader 
+                projectId={project.id} 
+                onUploadComplete={() => {
+                  if (onUploadComplete) {
+                    onUploadComplete();
+                  }
+                  // Switch to photos tab after upload
+                  setActiveTab("photos");
+                }} 
+              />
             </div>
           </TabsContent>
           

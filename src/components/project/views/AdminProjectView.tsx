@@ -2,7 +2,6 @@ import React, { useState, useMemo } from "react";
 import { Project, ProjectImage } from "@/types";
 import ProjectHeader from "@/components/project/ProjectHeader";
 import ProjectOverview from "@/components/project/ProjectOverview";
-import PhotoUploadDialog from "@/components/project/PhotoUploadDialog";
 import AdminProjectMediaTabs from "@/components/project/admin/AdminProjectMediaTabs";
 import { toast } from "sonner";
 import { updateProject } from "@/services/projectService";
@@ -35,9 +34,6 @@ const AdminProjectView: React.FC<AdminProjectViewProps> = ({
   const currentYear = currentDate.getFullYear().toString();
   const currentMonth = MONTHS[currentDate.getMonth()];
 
-  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [uploading, setUploading] = useState(false);
   const [yearFilter, setYearFilter] = useState<string>(currentYear);
   const [monthFilter, setMonthFilter] = useState<string>(currentMonth);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -61,29 +57,6 @@ const AdminProjectView: React.FC<AdminProjectViewProps> = ({
     return [...filteredImages]
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [filteredImages]);
-
-  const handleUploadButtonClick = () => {
-    setUploadDialogOpen(true);
-    setSelectedFiles([]);
-  };
-
-  const handleUpload = async () => {
-    if (selectedFiles.length === 0) return;
-    setUploading(true);
-
-    try {
-      // Use the handleImageUpload function to upload the files
-      await handleImageUpload(selectedFiles, 'general');
-      toast.success(`Successfully uploaded ${selectedFiles.length} photo${selectedFiles.length > 1 ? 's' : ''}`);
-    } catch (error) {
-      console.error("Error uploading files:", error);
-      toast.error("Failed to upload files");
-    } finally {
-      setUploading(false);
-      setUploadDialogOpen(false);
-      setSelectedFiles([]);
-    }
-  };
 
   // Handle project update
   const handleProjectUpdate = async (updatedProjectData: Partial<Project>) => {
@@ -109,7 +82,6 @@ const AdminProjectView: React.FC<AdminProjectViewProps> = ({
       const uploadedImages = await uploadProjectImages(project.id, files, category);
       if (uploadedImages.length > 0) {
         onImageUpload(uploadedImages);
-        setUploadDialogOpen(false);
       }
     } catch (error) {
       console.error("Error uploading images:", error);
@@ -138,16 +110,6 @@ const AdminProjectView: React.FC<AdminProjectViewProps> = ({
       console.error("Error updating image:", error);
       toast.error("Failed to update image");
     }
-  };
-
-  // Handle file selection
-  const handleFileSelect = (selectedFiles: File[]) => {
-    if (selectedFiles.length === 0) return;
-    
-    toast.success(`${selectedFiles.length} files selected`);
-    
-    // Use the handleImageUpload function to upload the files
-    handleImageUpload(selectedFiles, 'general');
   };
 
   // Refresh project images
@@ -186,7 +148,6 @@ const AdminProjectView: React.FC<AdminProjectViewProps> = ({
               setYearFilter={setYearFilter}
               monthFilter={monthFilter}
               setMonthFilter={setMonthFilter}
-              onUploadClick={() => setUploadDialogOpen(true)}
               onUploadComplete={refreshProjectImages}
               onDeleteImage={handleImageDelete}
               onUpdateImage={handleImageUpdate}
@@ -228,15 +189,6 @@ const AdminProjectView: React.FC<AdminProjectViewProps> = ({
           </div>
         </div>
       </div>
-
-      <PhotoUploadDialog 
-        open={uploadDialogOpen} 
-        onOpenChange={setUploadDialogOpen} 
-        selectedFiles={selectedFiles} 
-        setSelectedFiles={setSelectedFiles} 
-        uploading={uploading} 
-        handleUpload={handleUpload} 
-      />
     </>
   );
 };
