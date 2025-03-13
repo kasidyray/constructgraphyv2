@@ -12,42 +12,26 @@ interface AdminProjectViewProps {
   refreshProjectImages: () => Promise<void>;
 }
 
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+
 const AdminProjectView: React.FC<AdminProjectViewProps> = ({
   project,
   projectImages,
   refreshProjectImages,
 }) => {
+  // Get current year and month for default filters
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear().toString();
+  const currentMonth = MONTHS[currentDate.getMonth()];
+
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [yearFilter, setYearFilter] = useState<string>("all");
-  const [monthFilter, setMonthFilter] = useState<string>("all");
-
-  // Extract unique years and months from project images
-  const { years, months } = useMemo(() => {
-    const yearsSet = new Set<string>();
-    const monthsSet = new Set<string>();
-    
-    projectImages.forEach(image => {
-      const date = new Date(image.createdAt);
-      const year = date.getFullYear().toString();
-      const month = date.toLocaleString('default', { month: 'long' });
-      
-      yearsSet.add(year);
-      monthsSet.add(month);
-    });
-    
-    return {
-      years: Array.from(yearsSet).sort((a, b) => parseInt(b) - parseInt(a)),
-      months: Array.from(monthsSet).sort((a, b) => {
-        const monthOrder = [
-          'January', 'February', 'March', 'April', 'May', 'June',
-          'July', 'August', 'September', 'October', 'November', 'December'
-        ];
-        return monthOrder.indexOf(a) - monthOrder.indexOf(b);
-      })
-    };
-  }, [projectImages]);
+  const [yearFilter, setYearFilter] = useState<string>(currentYear);
+  const [monthFilter, setMonthFilter] = useState<string>(currentMonth);
 
   // Filter images based on selected year and month
   const filteredImages = useMemo(() => {
@@ -107,8 +91,6 @@ const AdminProjectView: React.FC<AdminProjectViewProps> = ({
               project={project}
               projectImages={projectImages}
               recentImages={recentImages}
-              years={years}
-              months={months}
               yearFilter={yearFilter}
               setYearFilter={setYearFilter}
               monthFilter={monthFilter}
