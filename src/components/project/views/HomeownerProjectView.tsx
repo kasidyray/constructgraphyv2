@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { getUserProjectFavorites, addToFavorites, removeFromFavorites } from "@/services/favoriteService";
+import { supabase } from "@/lib/supabase";
 
 interface HomeownerProjectViewProps {
   project: Project;
@@ -44,6 +45,17 @@ const HomeownerProjectView: React.FC<HomeownerProjectViewProps> = ({
       if (user && project) {
         setIsLoadingFavorites(true);
         try {
+          // Check if user is authenticated with Supabase
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          if (!authUser) {
+            console.error("No authenticated user found");
+            setIsLoadingFavorites(false);
+            return;
+          }
+          
+          console.log("Loading favorites for user:", user.id);
+          console.log("Auth user ID:", authUser.id);
+          
           const favoriteIds = await getUserProjectFavorites(user.id, project.id);
           setFavorites(new Set(favoriteIds));
         } catch (error) {
