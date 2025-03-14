@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Project } from "@/types";
 import { getProjects } from "@/services/projectService";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface HomeownerTableProps {
   homeowners: User[];
@@ -16,6 +17,7 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({
   homeowners,
   onHomeownerSelect
 }) => {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +26,13 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({
     const fetchProjects = async () => {
       try {
         const allProjects = await getProjects();
-        setProjects(allProjects);
+        
+        // If the current user is a builder, filter projects to only show those assigned to this builder
+        const filteredProjects = user?.role === "builder" 
+          ? allProjects.filter(project => project.builderId === user.id)
+          : allProjects;
+          
+        setProjects(filteredProjects);
       } catch (err) {
         console.error("Error fetching projects:", err);
       } finally {
@@ -33,7 +41,7 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({
     };
     
     fetchProjects();
-  }, []);
+  }, [user]);
   
   const filteredHomeowners = homeowners.filter(homeowner => 
     homeowner.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -42,7 +50,10 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({
 
   // Get the correct number of projects for a homeowner
   const getHomeownerProjectCount = (homeownerId: string): number => {
-    return projects.filter(project => project.homeownerId === homeownerId).length;
+    // For builders, only count projects that belong to this builder
+    return projects.filter(project => 
+      project.homeownerId === homeownerId
+    ).length;
   };
 
   return <Card>
@@ -50,7 +61,9 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({
         <div>
           <CardTitle>Homeowners</CardTitle>
           <CardDescription>
-            View and manage all homeowners and their projects
+            {user?.role === "builder" 
+              ? "View and manage your homeowners and their projects" 
+              : "View and manage all homeowners and their projects"}
           </CardDescription>
         </div>
         <div className="w-full max-w-sm">
@@ -73,7 +86,7 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({
               <TableHead>Email</TableHead>
               <TableHead>Phone</TableHead>
               <TableHead>Projects</TableHead>
-              <TableHead>Builder</TableHead>
+              {user?.role !== "builder" && <TableHead>Builder</TableHead>}
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -84,7 +97,7 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({
                 <TableCell>{homeowner.email}</TableCell>
                 <TableCell>{homeowner.phone || "N/A"}</TableCell>
                 <TableCell>{getHomeownerProjectCount(homeowner.id)}</TableCell>
-                <TableCell>{homeowner.builderName || "Unassigned"}</TableCell>
+                {user?.role !== "builder" && <TableCell>{homeowner.builderName || "Unassigned"}</TableCell>}
                 <TableCell>
                   <Button 
                     variant="outline" 
@@ -100,7 +113,7 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({
             ))}
             {filteredHomeowners.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                <TableCell colSpan={user?.role === "builder" ? 5 : 6} className="text-center py-6 text-muted-foreground">
                   No homeowners found matching your search.
                 </TableCell>
               </TableRow>

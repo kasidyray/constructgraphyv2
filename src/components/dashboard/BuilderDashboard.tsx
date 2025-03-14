@@ -35,7 +35,18 @@ const BuilderDashboard: React.FC<BuilderDashboardProps> = ({
       
       // Fetch homeowners
       const users = await getUsers();
-      const homeownerUsers = users.filter(user => user.role === "homeowner");
+      
+      // Filter homeowners to only include those with projects related to this builder
+      // First, get all homeowner IDs from the builder's projects
+      const homeownerIdsWithProjects = new Set(
+        builderProjects.map(project => project.homeownerId)
+      );
+      
+      // Then filter the homeowners to only include those with projects
+      const homeownerUsers = users.filter(
+        user => user.role === "homeowner" && homeownerIdsWithProjects.has(user.id)
+      );
+      
       setHomeowners(homeownerUsers);
       
       setError(null);
