@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Calendar } from "lucide-react";
+import { Calendar, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   Select, 
@@ -8,6 +8,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 
 interface ProjectPhotoFiltersProps {
   yearFilter: string;
@@ -41,12 +42,21 @@ const ProjectPhotoFilters: React.FC<ProjectPhotoFiltersProps> = ({
     ];
   }, [currentYear]);
 
+  // Check if filters are different from default
+  const isFilterChanged = yearFilter !== currentYear.toString() || monthFilter !== currentMonth;
+
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <div className="flex items-center">
-        <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-        <span className="text-sm text-muted-foreground">Filter by:</span>
-      </div>
+      <Button 
+        variant="outline"
+        size="sm" 
+        className="flex items-center gap-1 rounded-full"
+      >
+        <Calendar className="h-4 w-4" />
+        Filters
+      </Button>
+      
+      <Separator orientation="vertical" className="h-6" />
       
       <Select 
         value={yearFilter} 
@@ -58,7 +68,7 @@ const ProjectPhotoFilters: React.FC<ProjectPhotoFiltersProps> = ({
           }
         }}
       >
-        <SelectTrigger className="h-8 w-[100px]">
+        <SelectTrigger className="h-8 w-[100px] rounded-full">
           <SelectValue placeholder="Year" />
         </SelectTrigger>
         <SelectContent>
@@ -73,7 +83,7 @@ const ProjectPhotoFilters: React.FC<ProjectPhotoFiltersProps> = ({
         value={monthFilter} 
         onValueChange={setMonthFilter}
       >
-        <SelectTrigger className="h-8 w-[130px]">
+        <SelectTrigger className="h-8 w-[130px] rounded-full">
           <SelectValue placeholder="Month" />
         </SelectTrigger>
         <SelectContent>
@@ -84,17 +94,18 @@ const ProjectPhotoFilters: React.FC<ProjectPhotoFiltersProps> = ({
         </SelectContent>
       </Select>
       
-      {(yearFilter !== "all" || monthFilter !== "all") && (
+      {isFilterChanged && (
         <Button 
           variant="ghost" 
-          size="sm" 
+          size="icon" 
           onClick={() => {
             setYearFilter(currentYear.toString());
             setMonthFilter(currentMonth);
           }}
-          className="h-8 px-2 text-xs"
+          className="h-8 w-8 rounded-full"
+          title="Reset filters"
         >
-          Reset Filters
+          <X className="h-4 w-4" />
         </Button>
       )}
     </div>
