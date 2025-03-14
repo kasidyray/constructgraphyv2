@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,7 +32,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-screen flex-col bg-background text-foreground">
         <Header />
         <div className="flex flex-1 items-center justify-center">
           <div className="flex flex-col items-center space-y-4">
@@ -54,9 +53,9 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
       <Header />
-      <main className="flex-1 bg-secondary/30">
+      <main className="flex-1 bg-secondary/30 dark:bg-secondary/10">
         {children}
       </main>
     </div>
