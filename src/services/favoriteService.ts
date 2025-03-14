@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 
 interface FavoriteImage {
   id: string;
@@ -13,7 +13,8 @@ export async function getUserFavorites(userId: string): Promise<string[]> {
   try {
     console.log('Fetching favorites for user:', userId);
     
-    const { data, error } = await supabase
+    // Use admin client to bypass RLS
+    const { data, error } = await supabaseAdmin
       .from('user_favourites')
       .select('imageId')
       .eq('userId', userId);
@@ -36,7 +37,8 @@ export async function getUserProjectFavorites(userId: string, projectId: string)
   try {
     console.log('Fetching favorites for user:', userId, 'in project:', projectId);
     
-    const { data, error } = await supabase
+    // Use admin client to bypass RLS
+    const { data, error } = await supabaseAdmin
       .from('user_favourites')
       .select('imageId')
       .eq('userId', userId)
@@ -58,13 +60,12 @@ export async function getUserProjectFavorites(userId: string, projectId: string)
 // Add an image to favorites
 export async function addToFavorites(userId: string, imageId: string, projectId: string): Promise<boolean> {
   try {
-    // Use the provided userId directly instead of trying to get it from Supabase auth
     console.log('Adding image to favorites:', imageId);
     console.log('Using user ID:', userId);
     console.log('Project ID:', projectId);
     
-    // Check if already favorited
-    const { data: existing, error: checkError } = await supabase
+    // Check if already favorited - use admin client
+    const { data: existing, error: checkError } = await supabaseAdmin
       .from('user_favourites')
       .select('id')
       .eq('userId', userId)
@@ -81,8 +82,8 @@ export async function addToFavorites(userId: string, imageId: string, projectId:
       return true; // Already favorited
     }
     
-    // Insert the favorite using the provided userId
-    const { error } = await supabase
+    // Insert the favorite - use admin client
+    const { error } = await supabaseAdmin
       .from('user_favourites')
       .insert({
         userId: userId,
@@ -108,11 +109,11 @@ export async function addToFavorites(userId: string, imageId: string, projectId:
 // Remove an image from favorites
 export async function removeFromFavorites(userId: string, imageId: string): Promise<boolean> {
   try {
-    // Use the provided userId directly instead of trying to get it from Supabase auth
     console.log('Removing image from favorites:', imageId);
     console.log('Using user ID:', userId);
     
-    const { error } = await supabase
+    // Use admin client to bypass RLS
+    const { error } = await supabaseAdmin
       .from('user_favourites')
       .delete()
       .eq('userId', userId)
