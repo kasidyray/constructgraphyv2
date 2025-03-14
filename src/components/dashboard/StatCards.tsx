@@ -1,4 +1,3 @@
-
 import React from "react";
 import { BarChart, Calendar, FolderOpen } from "lucide-react";
 import {
@@ -14,17 +13,27 @@ interface StatCardsProps {
 }
 
 const StatCards: React.FC<StatCardsProps> = ({ projects }) => {
-  const inProgressProjects = projects.filter(
-    (p) => p.status === "in-progress"
-  ).length;
+  // Ensure we have valid projects array
+  const validProjects = Array.isArray(projects) ? projects : [];
   
-  const completedProjects = projects.filter(
-    (p) => p.status === "completed"
-  ).length;
-  
-  const planningProjects = projects.filter(
-    (p) => p.status === "planning"
-  ).length;
+  // Count projects by status using a more robust approach
+  const projectCounts = validProjects.reduce((counts, project) => {
+    const status = project.status || '';
+    
+    if (status === "in-progress") {
+      counts.inProgress += 1;
+    } else if (status === "completed") {
+      counts.completed += 1;
+    } else if (status === "planning") {
+      counts.planning += 1;
+    }
+    
+    return counts;
+  }, { 
+    inProgress: 0, 
+    completed: 0, 
+    planning: 0 
+  });
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
@@ -36,9 +45,9 @@ const StatCards: React.FC<StatCardsProps> = ({ projects }) => {
           <FolderOpen className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{projects.length}</div>
+          <div className="text-2xl font-bold">{validProjects.length}</div>
           <p className="text-xs text-muted-foreground">
-            {projects.length === 1 ? 'Project' : 'Projects'} total
+            {validProjects.length === 1 ? 'Project' : 'Projects'} total
           </p>
         </CardContent>
       </Card>
@@ -51,7 +60,7 @@ const StatCards: React.FC<StatCardsProps> = ({ projects }) => {
           <BarChart className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{inProgressProjects}</div>
+          <div className="text-2xl font-bold">{projectCounts.inProgress}</div>
           <p className="text-xs text-muted-foreground">
             Active projects underway
           </p>
@@ -66,7 +75,7 @@ const StatCards: React.FC<StatCardsProps> = ({ projects }) => {
           <Calendar className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{planningProjects}</div>
+          <div className="text-2xl font-bold">{projectCounts.planning}</div>
           <p className="text-xs text-muted-foreground">
             Projects in planning
           </p>
@@ -94,7 +103,7 @@ const StatCards: React.FC<StatCardsProps> = ({ projects }) => {
           </svg>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{completedProjects}</div>
+          <div className="text-2xl font-bold">{projectCounts.completed}</div>
           <p className="text-xs text-muted-foreground">
             Successfully completed
           </p>
