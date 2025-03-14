@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "project": {
+    "name": "Constructography",
+    "description": "A construction project management platform"
+  },
+  "browser": {
+    "startUrl": "http://localhost:8082",
+    "width": 1280,
+    "height": 800
+  },
+  "commands": {
+    "dev": "npm run dev"
+  }
+} 
