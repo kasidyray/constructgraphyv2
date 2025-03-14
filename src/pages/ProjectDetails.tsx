@@ -10,7 +10,7 @@ import {
   BuilderProjectView, 
   HomeownerProjectView 
 } from "@/components/project/views";
-import { getProjectById, updateProject } from "@/services/projectService";
+import { getProjectById, updateProject, updateProjectThumbnail } from "@/services/projectService";
 import { getProjectImages } from "@/services/imageService";
 
 const ProjectDetails: React.FC = () => {
@@ -22,15 +22,13 @@ const ProjectDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   // Function to update project thumbnail
-  const updateProjectThumbnail = async (projectId: string, images: ProjectImage[]) => {
+  const updateProjectThumbnailImage = async (projectId: string, images: ProjectImage[]) => {
     if (images.length > 0 && project) {
       // Only update if the thumbnail is different from the first image
       if (project.thumbnail !== images[0].url) {
         console.log('Updating project thumbnail to:', images[0].url);
         try {
-          const updatedProject = await updateProject(projectId, {
-            thumbnail: images[0].url
-          });
+          const updatedProject = await updateProjectThumbnail(projectId, images[0].url);
           
           if (updatedProject) {
             console.log('Project thumbnail updated successfully');
@@ -38,6 +36,7 @@ const ProjectDetails: React.FC = () => {
           }
         } catch (error) {
           console.error("Error updating project thumbnail:", error);
+          toast.error("Failed to update project thumbnail");
         }
       }
     }
@@ -50,31 +49,31 @@ const ProjectDetails: React.FC = () => {
     }
 
     const fetchProjectData = async () => {
-    setLoading(true);
+      setLoading(true);
       try {
         console.log('Fetching project data for ID:', id);
         
         // Fetch project details
         const foundProject = await getProjectById(id);
         
-      if (!foundProject) {
+        if (!foundProject) {
           console.error('Project not found for ID:', id);
           toast.error("Project not found");
-        navigate("/projects");
-        return;
-      }
+          navigate("/projects");
+          return;
+        }
 
         console.log('Project found:', foundProject.title);
 
-      // Check if homeowner has access to this project
-      if (user?.role === "homeowner" && foundProject.homeownerId !== user.id) {
+        // Check if homeowner has access to this project
+        if (user?.role === "homeowner" && foundProject.homeownerId !== user.id) {
           console.error('Homeowner does not have access to this project');
           toast.error("You don't have access to this project");
-        navigate("/dashboard");
-        return;
-      }
+          navigate("/dashboard");
+          return;
+        }
         
-      setProject(foundProject);
+        setProject(foundProject);
         
         // Fetch project images
         console.log('Fetching images for project:', id);
@@ -91,13 +90,13 @@ const ProjectDetails: React.FC = () => {
         
         // Update project thumbnail to first image if available
         if (images.length > 0) {
-          updateProjectThumbnail(id, images);
+          updateProjectThumbnailImage(id, images);
         }
       } catch (error) {
         console.error("Error fetching project data:", error);
         toast.error("Failed to load project data");
       } finally {
-      setLoading(false);
+        setLoading(false);
       }
     };
 
@@ -117,7 +116,7 @@ const ProjectDetails: React.FC = () => {
     
     // Update project thumbnail if this is the first image
     if (project && (projectImages.length === 0 || newImages.length > 0)) {
-      updateProjectThumbnail(project.id, updatedImages);
+      updateProjectThumbnailImage(project.id, updatedImages);
     }
   };
 
@@ -128,7 +127,7 @@ const ProjectDetails: React.FC = () => {
     
     // Update thumbnail if the first image was deleted
     if (project && updatedImages.length > 0) {
-      updateProjectThumbnail(project.id, updatedImages);
+      updateProjectThumbnailImage(project.id, updatedImages);
     }
   };
 
@@ -150,7 +149,7 @@ const ProjectDetails: React.FC = () => {
         
         // Update project thumbnail if needed
         if (images.length > 0 && project) {
-          updateProjectThumbnail(id, images);
+          updateProjectThumbnailImage(id, images);
         }
       } catch (error) {
         console.error("Error refreshing project images:", error);

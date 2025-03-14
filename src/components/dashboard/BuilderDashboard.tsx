@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import StatCards from "@/components/dashboard/StatCards";
 import HomeownerTable from "@/components/dashboard/HomeownerTable";
 import { User, Project } from "@/types";
-import { getProjects } from "@/services/projectService";
+import { getBuilderProjects } from "@/services/projectService";
 import { getUsers } from "@/services/userService";
+import NewProjectDialog from "@/components/dashboard/NewProjectDialog";
+import { toast } from "sonner";
 
 interface BuilderDashboardProps {
   user: User;
@@ -20,32 +22,32 @@ const BuilderDashboard: React.FC<BuilderDashboardProps> = ({
   const [homeowners, setHomeowners] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   const navigate = useNavigate();
   
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        
-        // Fetch projects assigned to this builder
-        const allProjects = await getProjects();
-        const builderProjects = allProjects.filter(project => project.builderId === user.id);
-        setProjects(builderProjects);
-        
-        // Fetch homeowners
-        const users = await getUsers();
-        const homeownerUsers = users.filter(user => user.role === "homeowner");
-        setHomeowners(homeownerUsers);
-        
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching data:", err);
-        setError("Failed to load data. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch projects assigned to this builder using the dedicated function
+      const builderProjects = await getBuilderProjects(user.id);
+      setProjects(builderProjects);
+      
+      // Fetch homeowners
+      const users = await getUsers();
+      const homeownerUsers = users.filter(user => user.role === "homeowner");
+      setHomeowners(homeownerUsers);
+      
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setError("Failed to load data. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchData();
   }, [user.id]);
 
@@ -55,18 +57,30 @@ const BuilderDashboard: React.FC<BuilderDashboardProps> = ({
     navigate(`/homeowner/${homeowner.id}/projects`);
   };
 
+  const handleProjectCreated = (newProject: Project) => {
+    // Add the new project to the list
+    setProjects(prev => [newProject, ...prev]);
+    
+    toast.success("Project created successfully");
+    
+    // Refresh all data to ensure consistency
+    fetchData();
+  };
+
   if (loading) {
     return (
-      <div className="container flex h-64 items-center justify-center py-8">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">Loading dashboard...</span>
+      <div className="container mx-auto px-4 md:max-w-screen-xl py-8">
+        <div className="flex h-64 items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2">Loading dashboard...</span>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="container py-8">
+      <div className="container mx-auto px-4 md:max-w-screen-xl py-8">
         <div className="rounded-lg border border-destructive p-4 text-center text-destructive">
           <p>{error}</p>
         </div>
@@ -75,7 +89,7 @@ const BuilderDashboard: React.FC<BuilderDashboardProps> = ({
   }
 
   return (
-    <div className="container py-8">
+    <div className="container mx-auto px-4 md:max-w-screen-xl py-8">
       <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
@@ -84,12 +98,17 @@ const BuilderDashboard: React.FC<BuilderDashboardProps> = ({
           </p>
         </div>
         
-        <Button asChild>
-          <Link to="/projects">
+        <div className="flex gap-2">
+          <Button onClick={() => setShowNewProjectDialog(true)}>
             <Plus className="mr-2 h-4 w-4" />
-            View All Projects
-          </Link>
-        </Button>
+            New Project
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/projects">
+              View All Projects
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <StatCards projects={projects} />
@@ -100,6 +119,13 @@ const BuilderDashboard: React.FC<BuilderDashboardProps> = ({
           onHomeownerSelect={handleHomeownerSelect} 
         />
       </div>
+
+      {/* New Project Dialog */}
+      <NewProjectDialog 
+        open={showNewProjectDialog} 
+        onOpenChange={setShowNewProjectDialog}
+        onProjectCreated={handleProjectCreated}
+      />
     </div>
   );
 };

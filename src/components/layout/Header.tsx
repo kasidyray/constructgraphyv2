@@ -1,8 +1,8 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Home, LogOut, Settings, User } from "lucide-react";
+import { Home, LogOut, Settings, User, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import UserAvatar from "@/components/ui/UserAvatar";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
@@ -14,17 +14,47 @@ const Header: React.FC = () => {
     isAuthenticated
   } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Check if we're on a project detail page
+  const isProjectDetailPage = location.pathname.startsWith('/projects/') && location.pathname.split('/').length > 2;
   
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
   
+  const handleGoBack = () => {
+    navigate(-1);
+  };
+  
   return <header className="glass sticky top-0 z-50 border-b border-border/40 shadow-sm backdrop-blur-md">
-      <div className="container flex h-16 items-center justify-between">
-        {/* Logo without navigation link */}
+      <div className="container mx-auto px-4 md:max-w-screen-xl flex h-16 items-center justify-between">
+        {/* Logo and/or back button */}
         <div className="flex items-center space-x-2">
-          <img src="/lovable-uploads/f03a9d6d-3e35-4b47-a5da-11e2eb0d92b1.png" alt="Constructgraphy" className="h-8" />
+          {isProjectDetailPage ? (
+            <>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleGoBack} 
+                className="md:hidden"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <img 
+                src="/lovable-uploads/f03a9d6d-3e35-4b47-a5da-11e2eb0d92b1.png" 
+                alt="Constructgraphy" 
+                className="h-8 hidden md:block" 
+              />
+            </>
+          ) : (
+            <img 
+              src="/lovable-uploads/f03a9d6d-3e35-4b47-a5da-11e2eb0d92b1.png" 
+              alt="Constructgraphy" 
+              className="h-8" 
+            />
+          )}
         </div>
 
         <nav className="hidden md:flex md:items-center md:space-x-4">

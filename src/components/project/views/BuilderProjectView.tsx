@@ -70,7 +70,7 @@ const BuilderProjectView: React.FC<BuilderProjectViewProps> = ({
   }, [projectImages, yearFilter, monthFilter]);
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="container mx-auto px-4 md:max-w-screen-xl py-6">
       <ProjectHeader 
         project={project} 
         isAdmin={false}

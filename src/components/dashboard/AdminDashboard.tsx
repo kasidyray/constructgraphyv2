@@ -11,6 +11,7 @@ import NewProjectDialog from "@/components/dashboard/NewProjectDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getUsers } from "@/services/userService";
 import { getProjects } from "@/services/projectService";
+import { toast } from "sonner";
 
 const AdminDashboard: React.FC = () => {
   const [selectedHomeowner, setSelectedHomeowner] = useState<User | null>(null);
@@ -24,29 +25,29 @@ const AdminDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        
-        // Fetch users
-        const users = await getUsers();
-        setHomeowners(users.filter(user => user.role === "homeowner"));
-        setBuilders(users.filter(user => user.role === "builder"));
-        
-        // Fetch projects
-        const allProjects = await getProjects();
-        setProjects(allProjects);
-        
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching data:", err);
-        setError("Failed to load data. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch users
+      const users = await getUsers();
+      setHomeowners(users.filter(user => user.role === "homeowner"));
+      setBuilders(users.filter(user => user.role === "builder"));
+      
+      // Fetch projects
+      const allProjects = await getProjects();
+      setProjects(allProjects);
+      
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setError("Failed to load data. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -62,18 +63,44 @@ const AdminDashboard: React.FC = () => {
     navigate(`/builder/${builder.id}/projects`);
   };
 
+  const handleUserCreated = (newUser: User) => {
+    // Add the new user to the appropriate list
+    if (newUser.role === "homeowner") {
+      setHomeowners(prev => [newUser, ...prev]);
+    } else if (newUser.role === "builder") {
+      setBuilders(prev => [newUser, ...prev]);
+    }
+    
+    toast.success(`${newUser.role === "homeowner" ? "Homeowner" : "Builder"} created successfully`);
+    
+    // Refresh all data to ensure consistency
+    fetchData();
+  };
+
+  const handleProjectCreated = (newProject: Project) => {
+    // Add the new project to the list
+    setProjects(prev => [newProject, ...prev]);
+    
+    toast.success("Project created successfully");
+    
+    // Refresh all data to ensure consistency
+    fetchData();
+  };
+
   if (loading) {
     return (
-      <div className="container flex h-64 items-center justify-center py-8">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">Loading dashboard...</span>
+      <div className="container mx-auto px-4 md:max-w-screen-xl py-8">
+        <div className="flex h-64 items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2">Loading dashboard...</span>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="container py-8">
+      <div className="container mx-auto px-4 md:max-w-screen-xl py-8">
         <div className="rounded-lg border border-destructive p-4 text-center text-destructive">
           <p>{error}</p>
         </div>
@@ -82,7 +109,7 @@ const AdminDashboard: React.FC = () => {
   }
 
   return (
-    <div className="container py-8">
+    <div className="container mx-auto px-4 md:max-w-screen-xl py-8">
       <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
@@ -125,12 +152,14 @@ const AdminDashboard: React.FC = () => {
       {/* Dialogs */}
       <NewUserDialog 
         open={showNewUserDialog} 
-        onOpenChange={setShowNewUserDialog} 
+        onOpenChange={setShowNewUserDialog}
+        onUserCreated={handleUserCreated}
       />
       
       <NewProjectDialog 
         open={showNewProjectDialog} 
-        onOpenChange={setShowNewProjectDialog} 
+        onOpenChange={setShowNewProjectDialog}
+        onProjectCreated={handleProjectCreated}
       />
     </div>
   );

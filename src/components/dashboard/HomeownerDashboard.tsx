@@ -15,26 +15,26 @@ const HomeownerDashboard: React.FC<HomeownerDashboardProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        setLoading(true);
-        const userProjects = await getHomeownerProjects(user.id);
-        setProjects(userProjects);
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching homeowner projects:", err);
-        setError("Failed to load projects. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchProjects = async () => {
+    try {
+      setLoading(true);
+      const userProjects = await getHomeownerProjects(user.id);
+      setProjects(userProjects);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching homeowner projects:", err);
+      setError("Failed to load projects. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchProjects();
   }, [user.id]);
 
   return (
-    <div className="container py-8">
+    <div className="container mx-auto px-4 md:max-w-screen-xl py-8">
       <div className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight">My Projects</h1>
         <p className="text-muted-foreground">

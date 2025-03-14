@@ -1,4 +1,5 @@
 import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { mockUserFavorites } from '@/data/mockData';
 
 interface FavoriteImage {
   id: string;
@@ -21,14 +22,22 @@ export async function getUserFavorites(userId: string): Promise<string[]> {
     
     if (error) {
       console.error('Error fetching user favorites:', error);
-      return [];
+      console.log('Falling back to mock data for user favorites');
+      
+      // Check if mockUserFavorites exists and has data for this user
+      const mockFavorites = mockUserFavorites?.filter(fav => fav.userId === userId) || [];
+      return mockFavorites.map(fav => fav.imageId);
     }
     
     console.log('Retrieved favorites:', data?.length || 0);
     return data?.map(fav => fav.imageId) || [];
   } catch (err) {
     console.error('Unexpected error in getUserFavorites:', err);
-    return [];
+    console.log('Falling back to mock data for user favorites due to error');
+    
+    // Check if mockUserFavorites exists and has data for this user
+    const mockFavorites = mockUserFavorites?.filter(fav => fav.userId === userId) || [];
+    return mockFavorites.map(fav => fav.imageId);
   }
 }
 
@@ -46,59 +55,66 @@ export async function getUserProjectFavorites(userId: string, projectId: string)
     
     if (error) {
       console.error('Error fetching user project favorites:', error);
-      return [];
+      console.log('Falling back to mock data for user project favorites');
+      
+      // Check if mockUserFavorites exists and has data for this user and project
+      const mockFavorites = mockUserFavorites?.filter(
+        fav => fav.userId === userId && fav.projectId === projectId
+      ) || [];
+      return mockFavorites.map(fav => fav.imageId);
     }
     
-    console.log('Retrieved project favorites:', data?.length || 0);
     return data?.map(fav => fav.imageId) || [];
   } catch (err) {
     console.error('Unexpected error in getUserProjectFavorites:', err);
-    return [];
+    console.log('Falling back to mock data for user project favorites due to error');
+    
+    // Check if mockUserFavorites exists and has data for this user and project
+    const mockFavorites = mockUserFavorites?.filter(
+      fav => fav.userId === userId && fav.projectId === projectId
+    ) || [];
+    return mockFavorites.map(fav => fav.imageId);
   }
 }
 
 // Add an image to favorites
 export async function addToFavorites(userId: string, imageId: string, projectId: string): Promise<boolean> {
   try {
-    console.log('Adding image to favorites:', imageId);
-    console.log('Using user ID:', userId);
-    console.log('Project ID:', projectId);
-    
-    // Check if already favorited - use admin client
-    const { data: existing, error: checkError } = await supabaseAdmin
+    // Check if already favorited
+    const { data: existing, error: checkError } = await supabase
       .from('user_favourites')
       .select('id')
       .eq('userId', userId)
       .eq('imageId', imageId)
-      .single();
+      .maybeSingle();
     
-    if (checkError && checkError.code !== 'PGRST116') {
-      // PGRST116 is the error code for "no rows returned" which is expected if not favorited
-      console.error('Error checking if image is already favorited:', checkError);
+    if (checkError) {
+      console.error('Error checking existing favorite:', checkError);
+      return false;
     }
     
+    // If already favorited, return success
     if (existing) {
       console.log('Image already in favorites');
-      return true; // Already favorited
+      return true;
     }
     
-    // Insert the favorite - use admin client
-    const { error } = await supabaseAdmin
+    // Add to favorites
+    const { error } = await supabase
       .from('user_favourites')
       .insert({
-        userId: userId,
+        userId,
         imageId,
         projectId,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       });
     
     if (error) {
       console.error('Error adding to favorites:', error);
-      console.error('Error details:', JSON.stringify(error));
       return false;
     }
     
-    console.log('Image added to favorites successfully');
+    console.log('Added to favorites successfully');
     return true;
   } catch (err) {
     console.error('Unexpected error in addToFavorites:', err);
@@ -109,11 +125,7 @@ export async function addToFavorites(userId: string, imageId: string, projectId:
 // Remove an image from favorites
 export async function removeFromFavorites(userId: string, imageId: string): Promise<boolean> {
   try {
-    console.log('Removing image from favorites:', imageId);
-    console.log('Using user ID:', userId);
-    
-    // Use admin client to bypass RLS
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from('user_favourites')
       .delete()
       .eq('userId', userId)
@@ -121,11 +133,10 @@ export async function removeFromFavorites(userId: string, imageId: string): Prom
     
     if (error) {
       console.error('Error removing from favorites:', error);
-      console.error('Error details:', JSON.stringify(error));
       return false;
     }
     
-    console.log('Image removed from favorites successfully');
+    console.log('Removed from favorites successfully');
     return true;
   } catch (err) {
     console.error('Unexpected error in removeFromFavorites:', err);

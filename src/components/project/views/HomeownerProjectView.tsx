@@ -161,7 +161,7 @@ const HomeownerProjectView: React.FC<HomeownerProjectViewProps> = ({
   };
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="container mx-auto px-4 md:max-w-screen-xl py-6">
       <ProjectHeader 
         project={project} 
         isAdmin={false}
@@ -170,24 +170,28 @@ const HomeownerProjectView: React.FC<HomeownerProjectViewProps> = ({
       <div className="mt-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <h2 className="text-2xl font-bold mb-4 md:mb-0">Project Photos</h2>
-          <div className="flex flex-col sm:flex-row gap-4 items-center">
-            <Button 
-              variant={showOnlyFavorites ? "default" : "outline"}
-              size="sm" 
-              onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
-              className="flex items-center gap-1 rounded-full"
-              disabled={isLoadingFavorites}
-            >
-              <Star className="h-4 w-4" />
-              Favorites
-            </Button>
-            
-            <ProjectPhotoFilters
-              yearFilter={yearFilter}
-              setYearFilter={setYearFilter}
-              monthFilter={monthFilter}
-              setMonthFilter={setMonthFilter}
-            />
+          <div className="w-full md:w-auto overflow-x-auto">
+            <div className="flex flex-row items-center gap-2 min-w-max">
+              <Button 
+                variant={showOnlyFavorites ? "default" : "outline"}
+                size="sm" 
+                onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
+                className="flex items-center gap-1 rounded-full whitespace-nowrap"
+                disabled={isLoadingFavorites}
+              >
+                <Heart className={cn("h-4 w-4", showOnlyFavorites && "fill-current")} />
+                Favorites
+              </Button>
+              
+              <div className="h-6 w-px bg-border mx-1" />
+              
+              <ProjectPhotoFilters
+                yearFilter={yearFilter}
+                setYearFilter={setYearFilter}
+                monthFilter={monthFilter}
+                setMonthFilter={setMonthFilter}
+              />
+            </div>
           </div>
         </div>
         
@@ -198,43 +202,25 @@ const HomeownerProjectView: React.FC<HomeownerProjectViewProps> = ({
               editable={false}
               onUpdate={(imageId) => handleImageAction(imageId)}
             />
-            {/* Add favorite buttons as an overlay */}
-            <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 h-full">
-                {filteredImages.map((image) => (
-                  <div key={image.id} className="relative">
-                    <div className="absolute top-2 right-2 pointer-events-auto">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="rounded-full bg-white/20 hover:bg-white/40 text-white"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleFavorite(image.id);
-                        }}
-                        disabled={isLoadingFavorites}
-                      >
-                        <Heart className={cn("h-5 w-5", favorites.has(image.id) && "fill-red-500 text-red-500")} />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         ) : (
-          <div className="text-center py-12 border border-dashed rounded-lg">
-            <p className="text-muted-foreground mb-4">
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="mb-4 rounded-full bg-muted p-3">
+              <Heart className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-medium">No photos found</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
               {showOnlyFavorites 
-                ? "You haven't favorited any photos yet" 
-                : "No photos found for the selected filters"}
+                ? "You haven't favorited any photos yet."
+                : "No photos match your current filters."}
             </p>
             {showOnlyFavorites && (
               <Button 
                 variant="outline" 
+                className="mt-4"
                 onClick={() => setShowOnlyFavorites(false)}
               >
-                View All Photos
+                Show all photos
               </Button>
             )}
           </div>

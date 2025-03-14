@@ -34,7 +34,7 @@ export interface ProjectImage {
   url: string;
   caption: string;
   createdAt: Date | string;
-  category: "interior" | "exterior" | "structural" | "finishes" | "other";
+  category: "interior" | "exterior" | "structural" | "finishes" | "other" | "general";
 }
 
 export interface AuthContextType {

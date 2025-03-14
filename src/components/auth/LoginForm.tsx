@@ -58,7 +58,7 @@ const LoginForm: React.FC = () => {
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">Welcome back!</h1>
         <p className="mt-2 text-sm text-gray-600">
-          Don't have an account? <a href="#" className="font-medium text-primary hover:underline">Sign up for free</a>
+          Sign into your constructography account to continue.
         </p>
       </div>
       

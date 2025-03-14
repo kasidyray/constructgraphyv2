@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { ProjectImage } from "@/types";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, ChevronLeft, ChevronRight, X, Trash, Edit, Download } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, X, Trash, Heart, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 
 interface ImageGalleryProps {
   images: ProjectImage[];
@@ -25,6 +26,8 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   const isBuilder = user?.role === "builder";
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [imageLoadErrors, setImageLoadErrors] = useState<Record<string, boolean>>({});
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [isTransitioning, setIsTransitioning] = useState(false);
   
   // Log images when they change
   useEffect(() => {
@@ -46,17 +49,25 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   
   const goToPrevious = () => {
     if (selectedImageIndex !== null) {
+      setIsTransitioning(true);
       const newIndex = selectedImageIndex === 0 ? images.length - 1 : selectedImageIndex - 1;
       console.log('Navigating to previous image, index:', newIndex);
-      setSelectedImageIndex(newIndex);
+      setTimeout(() => {
+        setSelectedImageIndex(newIndex);
+        setIsTransitioning(false);
+      }, 200);
     }
   };
   
   const goToNext = () => {
     if (selectedImageIndex !== null) {
+      setIsTransitioning(true);
       const newIndex = selectedImageIndex === images.length - 1 ? 0 : selectedImageIndex + 1;
       console.log('Navigating to next image, index:', newIndex);
-      setSelectedImageIndex(newIndex);
+      setTimeout(() => {
+        setSelectedImageIndex(newIndex);
+        setIsTransitioning(false);
+      }, 200);
     }
   };
 
@@ -100,6 +111,27 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     }));
   };
 
+  const toggleFavorite = (imageId: string) => {
+    setFavorites(prev => {
+      const newFavorites = new Set(prev);
+      if (newFavorites.has(imageId)) {
+        newFavorites.delete(imageId);
+      } else {
+        newFavorites.add(imageId);
+      }
+      return newFavorites;
+    });
+  };
+
+  const downloadImage = (url: string, caption: string) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = caption || 'project-image';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const categoryColors = {
     "interior": "bg-blue-500",
     "exterior": "bg-green-500",
@@ -122,7 +154,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
 
   return (
     <div className={className}>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
         {images.map((image, index) => (
           <div 
             key={image.id} 
@@ -159,33 +191,54 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
           <DialogContent className="max-w-[100vw] max-h-[100vh] w-screen h-screen p-0 sm:p-0 border-none bg-black/95">
             <div className="relative h-full w-full flex flex-col">
               {/* Header */}
-              <div className="flex justify-between items-center p-4 text-white">
-                <div className="text-sm">
-                  {images[selectedImageIndex].caption && (
-                    <h3 className="font-medium">{images[selectedImageIndex].caption}</h3>
-                  )}
-                  <p className="text-white/70">{formatDate(images[selectedImageIndex].createdAt)}</p>
+              <div className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-4 text-white bg-gradient-to-b from-black/60 to-transparent">
+                <div className="flex items-center gap-2">
+                  <Badge 
+                    className={`${categoryColors[images[selectedImageIndex].category as keyof typeof categoryColors] || "bg-gray-500"} text-white border-none`}
+                  >
+                    {images[selectedImageIndex].category}
+                  </Badge>
+                  <span className="text-sm text-white/80">
+                    {selectedImageIndex + 1} / {images.length}
+                  </span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Button
                     variant="ghost"
                     size="icon"
                     className="rounded-full hover:bg-white/10 text-white"
-                    onClick={() => {
-                      console.log('Opening image in new tab:', images[selectedImageIndex].url);
-                      window.open(images[selectedImageIndex].url, '_blank');
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFavorite(images[selectedImageIndex].id);
                     }}
                   >
-                    <Download className="h-5 w-5" />
+                    <Heart 
+                      className={cn(
+                        "h-5 w-5 transition-colors", 
+                        favorites.has(images[selectedImageIndex].id) ? "fill-red-500 text-red-500" : "text-white"
+                      )} 
+                    />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="rounded-full hover:bg-white/10 text-white"
-                    onClick={closeLightbox}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      downloadImage(images[selectedImageIndex].url, images[selectedImageIndex].caption);
+                    }}
                   >
-                    <X className="h-5 w-5" />
+                    <Download className="h-5 w-5" />
                   </Button>
+                  <DialogClose asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-full hover:bg-white/10 text-white"
+                    >
+                      <X className="h-5 w-5" />
+                    </Button>
+                  </DialogClose>
                 </div>
               </div>
               
@@ -194,7 +247,11 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
                 <img
                   src={imageLoadErrors[images[selectedImageIndex].id] ? placeholderImage : images[selectedImageIndex].url}
                   alt={images[selectedImageIndex].caption || "Project image"}
-                  className="max-h-full max-w-full object-contain"
+                  className={cn(
+                    "max-h-[85vh] max-w-[85vw] object-contain",
+                    isTransitioning ? "opacity-0 scale-95" : "opacity-100 scale-100",
+                    "transition-all duration-300 ease-in-out"
+                  )}
                   onError={() => handleImageError(images[selectedImageIndex].id)}
                 />
                 
@@ -204,7 +261,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute left-4 rounded-full bg-black/30 hover:bg-black/50 text-white"
+                      className="absolute left-4 rounded-full bg-white/10 hover:bg-white/20 text-white h-10 w-10"
                       onClick={(e) => {
                         e.stopPropagation();
                         goToPrevious();
@@ -215,7 +272,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute right-4 rounded-full bg-black/30 hover:bg-black/50 text-white"
+                      className="absolute right-4 rounded-full bg-white/10 hover:bg-white/20 text-white h-10 w-10"
                       onClick={(e) => {
                         e.stopPropagation();
                         goToNext();
@@ -228,26 +285,19 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
               </div>
               
               {/* Footer */}
-              <div className="p-4 bg-black/70 text-white">
+              <div className="absolute bottom-0 left-0 right-0 z-10 p-4 bg-gradient-to-t from-black/60 to-transparent text-white">
                 <div className="flex items-start justify-between">
                   <div>
-                    <Badge 
-                      className={`${categoryColors[images[selectedImageIndex].category as keyof typeof categoryColors] || "bg-gray-500"} text-white border-none mb-2`}
-                    >
-                      {images[selectedImageIndex].category}
-                    </Badge>
                     {images[selectedImageIndex].caption && (
                       <h3 className="text-lg font-medium">{images[selectedImageIndex].caption}</h3>
                     )}
+                    <div className="flex items-center gap-1 text-sm text-gray-300 mt-1">
+                      <Calendar size={14} />
+                      <span>{formatDate(images[selectedImageIndex].createdAt)}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1 text-sm text-gray-300">
-                    <Calendar size={14} />
-                    <span>{formatDate(images[selectedImageIndex].createdAt)}</span>
-                  </div>
-                </div>
-                
-                {editable && onDelete && !isBuilder && (
-                  <div className="mt-4 flex justify-end gap-2">
+                  
+                  {editable && onDelete && !isBuilder && (
                     <Button 
                       variant="destructive" 
                       size="sm"
@@ -261,8 +311,8 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
                       <Trash size={16} className="mr-2" />
                       Delete
                     </Button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           </DialogContent>

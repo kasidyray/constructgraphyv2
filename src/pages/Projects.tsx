@@ -6,7 +6,7 @@ import AuthLayout from "@/components/layout/AuthLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import ProjectCard from "@/components/ui/ProjectCard";
 import { Project } from "@/types";
-import { getProjects, getHomeownerProjects } from "@/services/projectService";
+import { getProjects, getHomeownerProjects, getBuilderProjects } from "@/services/projectService";
 import { getUserById } from "@/services/userService";
 import NewProjectDialog from "@/components/dashboard/NewProjectDialog";
 import { toast } from "sonner";
@@ -20,52 +20,49 @@ const Projects: React.FC = () => {
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(true);
   
-  useEffect(() => {
-    const fetchProjects = async () => {
-      setLoading(true);
-      try {
-        let fetchedProjects: Project[] = [];
+  const fetchProjects = async () => {
+    setLoading(true);
+    try {
+      let fetchedProjects: Project[] = [];
+      
+      // Get projects based on user role, homeowner filter, or builder filter
+      if (builderId) {
+        // Use the dedicated function to get builder projects
+        fetchedProjects = await getBuilderProjects(builderId);
         
-        // Get projects based on user role, homeowner filter, or builder filter
-        if (builderId) {
-          // For now, we'll just get all projects and filter on the client side
-          // In a real app, you would have a dedicated API endpoint for this
-          const allProjects = await getProjects();
-          fetchedProjects = allProjects.filter(p => p.builderId === builderId);
-          
-          // Get builder name
-          const builder = await getUserById(builderId);
-          if (builder) {
-            setDisplayName(builder.name);
-          }
-        } else if (homeownerId) {
-          fetchedProjects = await getHomeownerProjects(homeownerId);
-          
-          // Get homeowner name
-          const homeowner = await getUserById(homeownerId);
-          if (homeowner) {
-            setDisplayName(homeowner.name);
-          }
-        } else if (user?.role === "homeowner") {
-          fetchedProjects = await getHomeownerProjects(user.id);
-        } else if (user?.role === "builder") {
-          // For now, we'll just get all projects and filter on the client side
-          const allProjects = await getProjects();
-          fetchedProjects = allProjects.filter(p => p.builderId === user.id);
-        } else {
-          // Admin sees all projects
-          fetchedProjects = await getProjects();
+        // Get builder name
+        const builder = await getUserById(builderId);
+        if (builder) {
+          setDisplayName(builder.name);
         }
+      } else if (homeownerId) {
+        fetchedProjects = await getHomeownerProjects(homeownerId);
         
-        setProjects(fetchedProjects);
-      } catch (error) {
-        console.error("Error fetching projects:", error);
-        toast.error("Failed to load projects");
-      } finally {
-        setLoading(false);
+        // Get homeowner name
+        const homeowner = await getUserById(homeownerId);
+        if (homeowner) {
+          setDisplayName(homeowner.name);
+        }
+      } else if (user?.role === "homeowner") {
+        fetchedProjects = await getHomeownerProjects(user.id);
+      } else if (user?.role === "builder") {
+        // Use the dedicated function to get builder projects
+        fetchedProjects = await getBuilderProjects(user.id);
+      } else {
+        // Admin sees all projects
+        fetchedProjects = await getProjects();
       }
-    };
-    
+      
+      setProjects(fetchedProjects);
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+      toast.error("Failed to load projects");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  useEffect(() => {
     fetchProjects();
   }, [user, homeownerId, builderId]);
   
@@ -77,6 +74,16 @@ const Projects: React.FC = () => {
 
   const handleBack = () => {
     navigate(-1);
+  };
+
+  const handleProjectCreated = (newProject: Project) => {
+    // Add the new project to the list
+    setProjects(prev => [newProject, ...prev]);
+    
+    // Refresh all data to ensure consistency
+    fetchProjects();
+    
+    toast.success("Project created successfully");
   };
 
   // Determine if the current user is an admin viewing a homeowner's projects
@@ -149,11 +156,9 @@ const Projects: React.FC = () => {
       {showNewProjectDialog && (
         <NewProjectDialog
           open={showNewProjectDialog}
+          onOpenChange={(open) => setShowNewProjectDialog(open)}
           onClose={() => setShowNewProjectDialog(false)}
-          onProjectCreated={(newProject) => {
-            setProjects(prev => [newProject, ...prev]);
-            toast.success("Project created successfully");
-          }}
+          onProjectCreated={handleProjectCreated}
           homeownerId={homeownerId}
         />
       )}

@@ -26,7 +26,7 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
   const [previewImage, setPreviewImage] = useState<ProjectImage | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: Date | string) => {
     return new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
@@ -59,9 +59,9 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
 
   const gridCols = {
     1: "grid-cols-1",
-    2: "grid-cols-1 sm:grid-cols-2",
-    3: "grid-cols-1 sm:grid-cols-2 md:grid-cols-3",
-    4: "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4",
+    2: "grid-cols-2 md:grid-cols-2",
+    3: "grid-cols-2 md:grid-cols-3",
+    4: "grid-cols-2 md:grid-cols-3 lg:grid-cols-4",
   };
 
   return (

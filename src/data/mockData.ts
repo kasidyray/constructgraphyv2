@@ -589,3 +589,44 @@ export const mockLogin = (email: string, password: string): User | null => {
   const user = mockUsers.find((u) => u.email === email);
   return user || null;
 };
+
+// Mock user favorites for fallback when database connection fails
+export const mockUserFavorites = [
+  // Homeowner 1 favorites
+  {
+    id: "fav1",
+    userId: "homeowner1",
+    imageId: "image1",
+    projectId: "project1",
+    createdAt: new Date("2023-05-10").toISOString()
+  },
+  {
+    id: "fav2",
+    userId: "homeowner1",
+    imageId: "image3",
+    projectId: "project1",
+    createdAt: new Date("2023-05-15").toISOString()
+  },
+  {
+    id: "fav3",
+    userId: "homeowner1",
+    imageId: "image5",
+    projectId: "project1",
+    createdAt: new Date("2023-06-01").toISOString()
+  },
+  // Homeowner 2 favorites
+  {
+    id: "fav4",
+    userId: "homeowner2",
+    imageId: "image10",
+    projectId: "project2",
+    createdAt: new Date("2023-04-20").toISOString()
+  },
+  {
+    id: "fav5",
+    userId: "homeowner2",
+    imageId: "image12",
+    projectId: "project2",
+    createdAt: new Date("2023-04-25").toISOString()
+  }
+];

@@ -12,11 +12,13 @@ import { createUser } from "@/services/userService";
 interface NewUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onUserCreated?: (user: User) => void;
 }
 
 const NewUserDialog: React.FC<NewUserDialogProps> = ({ 
   open, 
-  onOpenChange 
+  onOpenChange,
+  onUserCreated
 }) => {
   const [activeTab, setActiveTab] = useState<"homeowner" | "builder">("homeowner");
   const [firstName, setFirstName] = useState("");
@@ -60,6 +62,11 @@ const NewUserDialog: React.FC<NewUserDialogProps> = ({
             description: "Homeowner created successfully",
           });
           
+          // Call onUserCreated callback if provided
+          if (onUserCreated) {
+            onUserCreated(createdUser);
+          }
+          
           // Reset form and close dialog
           resetForm();
           onOpenChange(false);
@@ -92,6 +99,11 @@ const NewUserDialog: React.FC<NewUserDialogProps> = ({
             title: "Success",
             description: "Builder created successfully",
           });
+          
+          // Call onUserCreated callback if provided
+          if (onUserCreated) {
+            onUserCreated(createdUser);
+          }
           
           // Reset form and close dialog
           resetForm();

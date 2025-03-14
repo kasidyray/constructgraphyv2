@@ -46,18 +46,7 @@ const ProjectPhotoFilters: React.FC<ProjectPhotoFiltersProps> = ({
   const isFilterChanged = yearFilter !== currentYear.toString() || monthFilter !== currentMonth;
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <Button 
-        variant="outline"
-        size="sm" 
-        className="flex items-center gap-1 rounded-full"
-      >
-        <Calendar className="h-4 w-4" />
-        Filters
-      </Button>
-      
-      <Separator orientation="vertical" className="h-6" />
-      
+    <div className="flex flex-nowrap items-center gap-2">
       <Select 
         value={yearFilter} 
         onValueChange={(value) => {
@@ -68,7 +57,7 @@ const ProjectPhotoFilters: React.FC<ProjectPhotoFiltersProps> = ({
           }
         }}
       >
-        <SelectTrigger className="h-8 w-[100px] rounded-full">
+        <SelectTrigger className="h-8 w-[80px] rounded-full">
           <SelectValue placeholder="Year" />
         </SelectTrigger>
         <SelectContent>
@@ -83,7 +72,7 @@ const ProjectPhotoFilters: React.FC<ProjectPhotoFiltersProps> = ({
         value={monthFilter} 
         onValueChange={setMonthFilter}
       >
-        <SelectTrigger className="h-8 w-[130px] rounded-full">
+        <SelectTrigger className="h-8 w-[100px] rounded-full">
           <SelectValue placeholder="Month" />
         </SelectTrigger>
         <SelectContent>

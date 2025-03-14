@@ -7,6 +7,9 @@ import { toast } from "sonner";
 import { updateProject } from "@/services/projectService";
 import { uploadProjectImages, deleteProjectImage, updateProjectImage, getProjectImages } from "@/services/imageService";
 
+// Import the ImageCategory type from the imageService
+import type { ImageCategory } from "@/services/imageService";
+
 interface AdminProjectViewProps {
   project: Project;
   projectImages: ProjectImage[];
@@ -75,7 +78,7 @@ const AdminProjectView: React.FC<AdminProjectViewProps> = ({
   };
 
   // Handle image upload
-  const handleImageUpload = async (files: File[], category: string) => {
+  const handleImageUpload = async (files: File[], category: ImageCategory) => {
     if (!project) return;
     
     try {
@@ -128,7 +131,7 @@ const AdminProjectView: React.FC<AdminProjectViewProps> = ({
 
   return (
     <>
-      <div className="container py-8">
+      <div className="container mx-auto px-4 md:max-w-screen-xl py-8">
         <ProjectHeader project={project} isAdmin={true} />
         
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 mt-6">

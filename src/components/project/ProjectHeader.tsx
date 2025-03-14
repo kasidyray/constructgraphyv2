@@ -92,7 +92,12 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, isAdmin }) => {
               </Button>
             </>
           )}
-          <Button variant="outline" size="sm" onClick={handleGoBack}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleGoBack}
+            className="hidden md:flex"
+          >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>

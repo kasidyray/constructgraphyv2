@@ -118,9 +118,8 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
     setIsSubmitting(true);
     
     try {
-      // Create new project
-      const newProject: Project = {
-        id: uuidv4(),
+      // Create new project object without ID (let Supabase generate it)
+      const newProjectData = {
         title,
         description,
         address,
@@ -128,14 +127,18 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
         homeownerId,
         homeownerName: selectedHomeowner.name,
         builderId: builderId === "none" ? undefined : builderId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
         thumbnail: thumbnail || undefined,
         progress: progress,
       };
       
+      console.log('Submitting project data:', newProjectData);
+      
       // Save to database
-      const savedProject = await createProject(newProject);
+      const savedProject = await createProject(newProjectData);
+      
+      if (!savedProject) {
+        throw new Error('Failed to create project');
+      }
       
       toast({
         title: "Success",
@@ -143,7 +146,7 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
       });
       
       // Call onProjectCreated callback if provided
-      if (onProjectCreated) {
+      if (onProjectCreated && savedProject) {
         onProjectCreated(savedProject);
       }
       
