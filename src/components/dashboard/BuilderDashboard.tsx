@@ -64,8 +64,9 @@ const BuilderDashboard: React.FC<BuilderDashboardProps> = ({
 
   const handleHomeownerSelect = (homeowner: User) => {
     setSelectedHomeowner(homeowner);
-    // Navigate to projects page with homeowner filter
-    navigate(`/homeowner/${homeowner.id}/projects`);
+    // Navigate to projects page with homeowner filter and builder filter
+    // This ensures only projects associated with this builder are shown
+    navigate(`/homeowner/${homeowner.id}/projects?builderId=${user.id}`);
   };
 
   const handleProjectCreated = (newProject: Project) => {

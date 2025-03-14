@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import { Plus, Search, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AuthLayout from "@/components/layout/AuthLayout";
@@ -13,8 +13,17 @@ import { toast } from "sonner";
 
 const Projects: React.FC = () => {
   const { user } = useAuth();
-  const { homeownerId, builderId } = useParams();
+  const { homeownerId, builderId: urlBuilderId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get builderId from query params if it exists
+  const queryParams = new URLSearchParams(location.search);
+  const queryBuilderId = queryParams.get('builderId');
+  
+  // Use builderId from URL params or query params
+  const effectiveBuilderId = urlBuilderId || queryBuilderId;
+  
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [displayName, setDisplayName] = useState('');
@@ -26,17 +35,26 @@ const Projects: React.FC = () => {
       let fetchedProjects: Project[] = [];
       
       // Get projects based on user role, homeowner filter, or builder filter
-      if (builderId) {
+      if (urlBuilderId) {
         // Use the dedicated function to get builder projects
-        fetchedProjects = await getBuilderProjects(builderId);
+        fetchedProjects = await getBuilderProjects(urlBuilderId);
         
         // Get builder name
-        const builder = await getUserById(builderId);
+        const builder = await getUserById(urlBuilderId);
         if (builder) {
           setDisplayName(builder.name);
         }
       } else if (homeownerId) {
+        // Get homeowner projects
         fetchedProjects = await getHomeownerProjects(homeownerId);
+        
+        // If we have a builder ID from query params and the user is a builder,
+        // filter projects to only show those associated with this builder
+        if (queryBuilderId && user?.role === "builder") {
+          fetchedProjects = fetchedProjects.filter(
+            project => project.builderId === queryBuilderId
+          );
+        }
         
         // Get homeowner name
         const homeowner = await getUserById(homeownerId);
@@ -64,7 +82,7 @@ const Projects: React.FC = () => {
   
   useEffect(() => {
     fetchProjects();
-  }, [user, homeownerId, builderId]);
+  }, [user, homeownerId, urlBuilderId, queryBuilderId]);
   
   const firstName = displayName ? displayName.split(' ')[0] : '';
   
@@ -93,7 +111,7 @@ const Projects: React.FC = () => {
   let pageTitle = "Projects";
   if (homeownerId && firstName) {
     pageTitle = `${firstName}'s Projects`;
-  } else if (builderId && firstName) {
+  } else if (effectiveBuilderId && firstName) {
     pageTitle = `${firstName}'s Projects`;
   }
 
@@ -111,7 +129,7 @@ const Projects: React.FC = () => {
           </Button>
           <h1 className="text-2xl font-bold">{pageTitle}</h1>
           <div className="ml-auto flex gap-2">
-            {(user?.role === "admin" || (user?.role === "builder" && !homeownerId && !builderId)) && (
+            {(user?.role === "admin" || (user?.role === "builder" && !homeownerId && !effectiveBuilderId)) && (
               <Button onClick={() => setShowNewProjectDialog(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 New Project
@@ -132,7 +150,7 @@ const Projects: React.FC = () => {
                 ? "You don't have any projects yet. Your builder will create one for you."
                 : "No projects have been created yet."}
             </p>
-            {(user?.role === "admin" || user?.role === "builder") && !homeownerId && !builderId && (
+            {(user?.role === "admin" || user?.role === "builder") && !homeownerId && !effectiveBuilderId && (
               <Button onClick={() => setShowNewProjectDialog(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Create your first project
