@@ -43,11 +43,11 @@ const LoginForm: React.FC = () => {
     password: "password"
   }, {
     role: "Builder",
-    email: "builder@example.com",
-    password: "password"
+    email: "arab@arab.com",
+    password: "foreverdflava"
   }, {
     role: "Homeowner",
-    email: "homeowner1@example.com",
+    email: "homeowner@example.com",
     password: "password"
   }];
   const loginAsDemoUser = (demoEmail: string, demoPassword: string) => {
