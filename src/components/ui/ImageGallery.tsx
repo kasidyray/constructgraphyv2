@@ -61,11 +61,25 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   };
 
   const formatDate = (date: Date | string) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+    const dateObj = new Date(date);
+    const currentYear = new Date().getFullYear();
+    const imageYear = dateObj.getFullYear();
+    
+    // If current year, show as Month Day
+    if (imageYear === currentYear) {
+      return dateObj.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+    } 
+    // If past years, show as Month Day Year
+    else {
+      return dateObj.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    }
   };
 
   const handleDelete = (e: React.MouseEvent, imageId: string) => {
@@ -124,14 +138,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
             />
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
               <div className="space-y-1">
-                <Badge 
-                  className={`${categoryColors[image.category as keyof typeof categoryColors] || "bg-gray-500"} text-white border-none`}
-                >
-                  {image.category}
-                </Badge>
-                {image.caption && (
-                  <p className="line-clamp-1 text-sm text-white">{image.caption}</p>
-                )}
+                <p className="text-sm text-white font-medium">{formatDate(image.createdAt)}</p>
               </div>
             </div>
             

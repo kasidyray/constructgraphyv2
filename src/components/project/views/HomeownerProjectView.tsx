@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Project, ProjectImage } from "@/types";
 import ProjectHeader from "@/components/project/ProjectHeader";
 import ProjectPhotoFilters from "@/components/project/shared/ProjectPhotoFilters";
@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { Heart, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { getUserProjectFavorites, addToFavorites, removeFromFavorites } from "@/services/favoriteService";
 
 interface HomeownerProjectViewProps {
   project: Project;
@@ -22,6 +24,8 @@ const HomeownerProjectView: React.FC<HomeownerProjectViewProps> = ({
   project,
   projectImages,
 }) => {
+  const { user } = useAuth();
+  
   // Get current year and month for default filters
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear().toString();
@@ -32,28 +36,97 @@ const HomeownerProjectView: React.FC<HomeownerProjectViewProps> = ({
   const [monthFilter, setMonthFilter] = useState<string>(currentMonth);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
+  const [isLoadingFavorites, setIsLoadingFavorites] = useState(true);
+
+  // Load favorites from database on component mount
+  useEffect(() => {
+    const loadFavorites = async () => {
+      if (user && project) {
+        setIsLoadingFavorites(true);
+        try {
+          const favoriteIds = await getUserProjectFavorites(user.id, project.id);
+          setFavorites(new Set(favoriteIds));
+        } catch (error) {
+          console.error("Error loading favorites:", error);
+          toast.error("Failed to load favorites");
+        } finally {
+          setIsLoadingFavorites(false);
+        }
+      }
+    };
+
+    loadFavorites();
+  }, [user, project]);
 
   // Toggle favorite status for an image
-  const toggleFavorite = (imageId: string) => {
+  const toggleFavorite = async (imageId: string) => {
+    if (!user) {
+      toast.error("You must be logged in to favorite images");
+      return;
+    }
+
+    const image = projectImages.find(img => img.id === imageId);
+    const isFavorited = favorites.has(imageId);
+    
+    // Optimistically update UI
     setFavorites(prev => {
       const newFavorites = new Set(prev);
-      const image = projectImages.find(img => img.id === imageId);
-      
-      if (newFavorites.has(imageId)) {
+      if (isFavorited) {
         newFavorites.delete(imageId);
-        toast.success(image?.caption 
-          ? `"${image.caption}" removed from favorites` 
-          : "Image removed from favorites"
-        );
       } else {
         newFavorites.add(imageId);
-        toast.success(image?.caption 
-          ? `"${image.caption}" added to favorites` 
-          : "Image added to favorites"
-        );
       }
       return newFavorites;
     });
+
+    try {
+      let success;
+      if (isFavorited) {
+        success = await removeFromFavorites(user.id, imageId);
+        if (success) {
+          toast.success(image?.caption 
+            ? `"${image.caption}" removed from favorites` 
+            : "Image removed from favorites"
+          );
+        }
+      } else {
+        success = await addToFavorites(user.id, imageId, project.id);
+        if (success) {
+          toast.success(image?.caption 
+            ? `"${image.caption}" added to favorites` 
+            : "Image added to favorites"
+          );
+        }
+      }
+
+      if (!success) {
+        // Revert UI change if operation failed
+        setFavorites(prev => {
+          const newFavorites = new Set(prev);
+          if (isFavorited) {
+            newFavorites.add(imageId);
+          } else {
+            newFavorites.delete(imageId);
+          }
+          return newFavorites;
+        });
+        toast.error("Failed to update favorites");
+      }
+    } catch (error) {
+      console.error("Error updating favorites:", error);
+      toast.error("Failed to update favorites");
+      
+      // Revert UI change on error
+      setFavorites(prev => {
+        const newFavorites = new Set(prev);
+        if (isFavorited) {
+          newFavorites.add(imageId);
+        } else {
+          newFavorites.delete(imageId);
+        }
+        return newFavorites;
+      });
+    }
   };
 
   // Filter images based on selected year and month and favorites
@@ -99,6 +172,7 @@ const HomeownerProjectView: React.FC<HomeownerProjectViewProps> = ({
               size="sm" 
               onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
               className="flex items-center gap-1 rounded-full"
+              disabled={isLoadingFavorites}
             >
               <Star className="h-4 w-4" />
               Favorites
@@ -134,6 +208,7 @@ const HomeownerProjectView: React.FC<HomeownerProjectViewProps> = ({
                           e.stopPropagation();
                           toggleFavorite(image.id);
                         }}
+                        disabled={isLoadingFavorites}
                       >
                         <Heart className={cn("h-5 w-5", favorites.has(image.id) && "fill-red-500 text-red-500")} />
                       </Button>
