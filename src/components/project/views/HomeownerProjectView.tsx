@@ -45,16 +45,8 @@ const HomeownerProjectView: React.FC<HomeownerProjectViewProps> = ({
       if (user && project) {
         setIsLoadingFavorites(true);
         try {
-          // Check if user is authenticated with Supabase
-          const { data: { user: authUser } } = await supabase.auth.getUser();
-          if (!authUser) {
-            console.error("No authenticated user found");
-            setIsLoadingFavorites(false);
-            return;
-          }
-          
+          // Use the user ID from context directly
           console.log("Loading favorites for user:", user.id);
-          console.log("Auth user ID:", authUser.id);
           
           const favoriteIds = await getUserProjectFavorites(user.id, project.id);
           setFavorites(new Set(favoriteIds));

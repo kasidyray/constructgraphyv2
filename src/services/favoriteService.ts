@@ -58,25 +58,16 @@ export async function getUserProjectFavorites(userId: string, projectId: string)
 // Add an image to favorites
 export async function addToFavorites(userId: string, imageId: string, projectId: string): Promise<boolean> {
   try {
-    // Get the current authenticated user
-    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !authUser) {
-      console.error('Error getting authenticated user:', authError);
-      return false;
-    }
-    
-    const authUserId = authUser.id;
+    // Use the provided userId directly instead of trying to get it from Supabase auth
     console.log('Adding image to favorites:', imageId);
-    console.log('Auth user ID:', authUserId);
-    console.log('Passed user ID:', userId);
+    console.log('Using user ID:', userId);
     console.log('Project ID:', projectId);
     
     // Check if already favorited
     const { data: existing, error: checkError } = await supabase
       .from('user_favourites')
       .select('id')
-      .eq('userId', authUserId)
+      .eq('userId', userId)
       .eq('imageId', imageId)
       .single();
     
@@ -90,11 +81,11 @@ export async function addToFavorites(userId: string, imageId: string, projectId:
       return true; // Already favorited
     }
     
-    // Insert the favorite using the authenticated user's ID
+    // Insert the favorite using the provided userId
     const { error } = await supabase
       .from('user_favourites')
       .insert({
-        userId: authUserId, // Use the authenticated user's ID
+        userId: userId,
         imageId,
         projectId,
         createdAt: new Date().toISOString()
@@ -117,23 +108,14 @@ export async function addToFavorites(userId: string, imageId: string, projectId:
 // Remove an image from favorites
 export async function removeFromFavorites(userId: string, imageId: string): Promise<boolean> {
   try {
-    // Get the current authenticated user
-    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !authUser) {
-      console.error('Error getting authenticated user:', authError);
-      return false;
-    }
-    
-    const authUserId = authUser.id;
+    // Use the provided userId directly instead of trying to get it from Supabase auth
     console.log('Removing image from favorites:', imageId);
-    console.log('Auth user ID:', authUserId);
-    console.log('Passed user ID:', userId);
+    console.log('Using user ID:', userId);
     
     const { error } = await supabase
       .from('user_favourites')
       .delete()
-      .eq('userId', authUserId) // Use the authenticated user's ID
+      .eq('userId', userId)
       .eq('imageId', imageId);
     
     if (error) {
