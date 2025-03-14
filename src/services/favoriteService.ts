@@ -14,7 +14,7 @@ export async function getUserFavorites(userId: string): Promise<string[]> {
     console.log('Fetching favorites for user:', userId);
     
     const { data, error } = await supabase
-      .from('user_favorites')
+      .from('user_favourites')
       .select('imageId')
       .eq('userId', userId);
     
@@ -37,7 +37,7 @@ export async function getUserProjectFavorites(userId: string, projectId: string)
     console.log('Fetching favorites for user:', userId, 'in project:', projectId);
     
     const { data, error } = await supabase
-      .from('user_favorites')
+      .from('user_favourites')
       .select('imageId')
       .eq('userId', userId)
       .eq('projectId', projectId);
@@ -62,7 +62,7 @@ export async function addToFavorites(userId: string, imageId: string, projectId:
     
     // Check if already favorited
     const { data: existing, error: checkError } = await supabase
-      .from('user_favorites')
+      .from('user_favourites')
       .select('id')
       .eq('userId', userId)
       .eq('imageId', imageId)
@@ -74,7 +74,7 @@ export async function addToFavorites(userId: string, imageId: string, projectId:
     }
     
     const { error } = await supabase
-      .from('user_favorites')
+      .from('user_favourites')
       .insert({
         userId,
         imageId,
@@ -101,7 +101,7 @@ export async function removeFromFavorites(userId: string, imageId: string): Prom
     console.log('Removing image from favorites:', imageId, 'for user:', userId);
     
     const { error } = await supabase
-      .from('user_favorites')
+      .from('user_favourites')
       .delete()
       .eq('userId', userId)
       .eq('imageId', imageId);

@@ -1,32 +1,32 @@
--- Create user_favorites table
-CREATE TABLE IF NOT EXISTS user_favorites (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  image_id UUID NOT NULL REFERENCES project_images(id) ON DELETE CASCADE,
-  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(user_id, image_id)
+-- Create user_favourites table with camelCase column names
+CREATE TABLE IF NOT EXISTS "user_favourites" (
+  "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  "userId" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  "imageId" UUID NOT NULL REFERENCES project_images(id) ON DELETE CASCADE,
+  "projectId" UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE("userId", "imageId")
 );
 
 -- Add indexes for performance
-CREATE INDEX IF NOT EXISTS idx_user_favorites_user_id ON user_favorites(user_id);
-CREATE INDEX IF NOT EXISTS idx_user_favorites_project_id ON user_favorites(project_id);
-CREATE INDEX IF NOT EXISTS idx_user_favorites_image_id ON user_favorites(image_id);
+CREATE INDEX IF NOT EXISTS idx_user_favourites_userId ON "user_favourites"("userId");
+CREATE INDEX IF NOT EXISTS idx_user_favourites_projectId ON "user_favourites"("projectId");
+CREATE INDEX IF NOT EXISTS idx_user_favourites_imageId ON "user_favourites"("imageId");
 
 -- Add RLS policies
-ALTER TABLE user_favorites ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "user_favourites" ENABLE ROW LEVEL SECURITY;
 
--- Policy for selecting favorites (users can only see their own favorites)
-CREATE POLICY select_user_favorites ON user_favorites
-  FOR SELECT USING (auth.uid() = user_id);
+-- Policy for selecting favourites (users can only see their own favourites)
+CREATE POLICY select_user_favourites ON "user_favourites"
+  FOR SELECT USING (auth.uid() = "userId");
 
--- Policy for inserting favorites (users can only add their own favorites)
-CREATE POLICY insert_user_favorites ON user_favorites
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+-- Policy for inserting favourites (users can only add their own favourites)
+CREATE POLICY insert_user_favourites ON "user_favourites"
+  FOR INSERT WITH CHECK (auth.uid() = "userId");
 
--- Policy for deleting favorites (users can only delete their own favorites)
-CREATE POLICY delete_user_favorites ON user_favorites
-  FOR DELETE USING (auth.uid() = user_id);
+-- Policy for deleting favourites (users can only delete their own favourites)
+CREATE POLICY delete_user_favourites ON "user_favourites"
+  FOR DELETE USING (auth.uid() = "userId");
 
 -- Grant access to authenticated users
-GRANT SELECT, INSERT, DELETE ON user_favorites TO authenticated; 
+GRANT SELECT, INSERT, DELETE ON "user_favourites" TO authenticated;
