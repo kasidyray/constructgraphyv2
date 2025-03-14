@@ -5,7 +5,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Home, LogOut, Settings, User, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import UserAvatar from "@/components/ui/UserAvatar";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 const Header: React.FC = () => {
   const {
@@ -65,7 +64,6 @@ const Header: React.FC = () => {
         </nav>
 
         <div className="flex items-center space-x-4">
-          <ThemeToggle />
           {isAuthenticated ? <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">

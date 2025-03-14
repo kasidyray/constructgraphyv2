@@ -99,7 +99,7 @@ const Projects: React.FC = () => {
 
   return (
     <AuthLayout>
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 md:max-w-screen-xl py-8">
         <div className="flex items-center mb-6">
           <Button
             variant="ghost"
