@@ -18,15 +18,15 @@ ALTER TABLE "user_favourites" ENABLE ROW LEVEL SECURITY;
 
 -- Policy for selecting favourites (users can only see their own favourites)
 CREATE POLICY select_user_favourites ON "user_favourites"
-  FOR SELECT USING (auth.uid() = "userId");
+  FOR SELECT USING ("userId"::text = auth.uid()::text);
 
 -- Policy for inserting favourites (users can only add their own favourites)
 CREATE POLICY insert_user_favourites ON "user_favourites"
-  FOR INSERT WITH CHECK (auth.uid() = "userId");
+  FOR INSERT WITH CHECK ("userId"::text = auth.uid()::text);
 
 -- Policy for deleting favourites (users can only delete their own favourites)
 CREATE POLICY delete_user_favourites ON "user_favourites"
-  FOR DELETE USING (auth.uid() = "userId");
+  FOR DELETE USING ("userId"::text = auth.uid()::text);
 
 -- Grant access to authenticated users
 GRANT SELECT, INSERT, DELETE ON "user_favourites" TO authenticated;

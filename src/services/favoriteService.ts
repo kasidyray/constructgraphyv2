@@ -58,7 +58,7 @@ export async function getUserProjectFavorites(userId: string, projectId: string)
 // Add an image to favorites
 export async function addToFavorites(userId: string, imageId: string, projectId: string): Promise<boolean> {
   try {
-    console.log('Adding image to favorites:', imageId, 'for user:', userId);
+    console.log('Adding image to favorites:', imageId, 'for user:', userId, 'project:', projectId);
     
     // Check if already favorited
     const { data: existing, error: checkError } = await supabase
@@ -68,11 +68,22 @@ export async function addToFavorites(userId: string, imageId: string, projectId:
       .eq('imageId', imageId)
       .single();
     
+    if (checkError && checkError.code !== 'PGRST116') {
+      // PGRST116 is the error code for "no rows returned" which is expected if not favorited
+      console.error('Error checking if image is already favorited:', checkError);
+    }
+    
     if (existing) {
       console.log('Image already in favorites');
       return true; // Already favorited
     }
     
+    // Get the current user's auth ID for debugging
+    const { data: { user } } = await supabase.auth.getUser();
+    console.log('Current auth user ID:', user?.id);
+    console.log('Inserting with userId:', userId);
+    
+    // Insert the favorite
     const { error } = await supabase
       .from('user_favourites')
       .insert({
@@ -84,6 +95,7 @@ export async function addToFavorites(userId: string, imageId: string, projectId:
     
     if (error) {
       console.error('Error adding to favorites:', error);
+      console.error('Error details:', JSON.stringify(error));
       return false;
     }
     
@@ -108,6 +120,7 @@ export async function removeFromFavorites(userId: string, imageId: string): Prom
     
     if (error) {
       console.error('Error removing from favorites:', error);
+      console.error('Error details:', JSON.stringify(error));
       return false;
     }
     
