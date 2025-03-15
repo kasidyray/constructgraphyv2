@@ -3,12 +3,13 @@ import { Project, ProjectImage } from "@/types";
 import ProjectHeader from "@/components/project/ProjectHeader";
 import ProjectOverview from "@/components/project/ProjectOverview";
 import AdminProjectMediaTabs from "@/components/project/admin/AdminProjectMediaTabs";
+import ProjectStatusUpdate from "@/components/project/admin/ProjectStatusUpdate";
 import { toast } from "sonner";
 import { updateProject } from "@/services/projectService";
 import { uploadProjectImages, deleteProjectImage, updateProjectImage, getProjectImages } from "@/services/imageService";
 
-// Import the ImageCategory type from the imageService
-import type { ImageCategory } from "@/services/imageService";
+// Define the ImageCategory type directly here since it's not exported from imageService
+type ImageCategory = 'other' | 'interior' | 'exterior' | 'structural' | 'finishes' | 'general';
 
 interface AdminProjectViewProps {
   project: Project;
@@ -189,6 +190,11 @@ const AdminProjectView: React.FC<AdminProjectViewProps> = ({
                 </dl>
               </div>
             </div>
+            
+            <ProjectStatusUpdate 
+              project={project}
+              onProjectUpdate={onProjectUpdate}
+            />
           </div>
         </div>
       </div>
