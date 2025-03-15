@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabase";
+
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -14,6 +16,7 @@ const LoginForm: React.FC = () => {
     login
   } = useAuth();
   const navigate = useNavigate();
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
@@ -36,24 +39,30 @@ const LoginForm: React.FC = () => {
     }
   };
 
-  // Demo account information
-  const demoAccounts = [{
-    role: "Admin",
-    email: "admin@example.com",
-    password: "password"
-  }, {
-    role: "Builder",
-    email: "arab@arab.com",
-    password: "foreverdflava"
-  }, {
-    role: "Homeowner",
-    email: "homeowner@example.com",
-    password: "password"
-  }];
+  // Demo account information - updated to match Supabase Auth users
+  const demoAccounts = [
+    {
+      role: "Admin",
+      email: "admin@consto.com",
+      password: "password123"
+    }, 
+    {
+      role: "Builder",
+      email: "builder@consto.com",
+      password: "password123"
+    }, 
+    {
+      role: "Homeowner",
+      email: "homeowner@consto.com",
+      password: "password123"
+    }
+  ];
+  
   const loginAsDemoUser = (demoEmail: string, demoPassword: string) => {
     setEmail(demoEmail);
     setPassword(demoPassword);
   };
+  
   return <div className="mx-auto w-full max-w-md px-4 my-[40px]">
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">Welcome back!</h1>
@@ -81,7 +90,32 @@ const LoginForm: React.FC = () => {
         </Button>
         
         <div className="text-center">
-          <Button variant="link" className="text-sm text-[#D1522E] hover:text-[#D1522E]/80" type="button">
+          <Button 
+            variant="link" 
+            className="text-sm text-[#D1522E] hover:text-[#D1522E]/80" 
+            type="button"
+            onClick={async () => {
+              const email = prompt("Enter your email to reset your password");
+              if (email) {
+                try {
+                  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                    redirectTo: `${window.location.origin}/reset-password`,
+                  });
+                  if (error) throw error;
+                  toast({
+                    title: "Password reset email sent",
+                    description: "Check your email for a password reset link",
+                  });
+                } catch (error: any) {
+                  toast({
+                    title: "Error",
+                    description: error.message || "Failed to send password reset email",
+                    variant: "destructive",
+                  });
+                }
+              }
+            }}
+          >
             Forgot Password?
           </Button>
         </div>
