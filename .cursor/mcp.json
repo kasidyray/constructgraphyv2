@@ -11,5 +11,17 @@
   },
   "commands": {
     "dev": "npm run dev"
+  },
+  "supabase": {
+    "url": "https://oxobdlvtrwgzxnpkbvmz.supabase.co",
+    "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94b2JkbHZ0cndnenhucGtidm16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE4NzU4NjMsImV4cCI6MjA1NzQ1MTg2M30.QAprkWsOEvYGl_vdV6bXveuh7ZcEF1N5TZoWuGGE_ys",
+    "db": {
+      "host": "aws-0-eu-west-2.pooler.supabase.com",
+      "port": 5432,
+      "database": "postgres",
+      "user": "postgres.oxobdlvtwgzxnpkbvmz",
+      "password": "Foreverdflava0%23",
+      "ssl": true
+    }
   }
 } 
