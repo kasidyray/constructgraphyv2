@@ -12,8 +12,14 @@
   "commands": {
     "dev": "npm run dev"
   },
+  "mcpServers": {
+    "supabase": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres", "postgresql://postgres.oxobdlvtwgzxnpkbvmz:Foreverdflava0%23@aws-0-eu-west-2.pooler.supabase.com:5432/postgres?sslmode=require"]
+    }
+  },
   "supabase": {
-    "url": "https://oxobdlvtrwgzxnpkbvmz.supabase.co",
+    "url": "https://oxobdlvtwgzxnpkbvmz.supabase.co",
     "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94b2JkbHZ0cndnenhucGtidm16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE4NzU4NjMsImV4cCI6MjA1NzQ1MTg2M30.QAprkWsOEvYGl_vdV6bXveuh7ZcEF1N5TZoWuGGE_ys",
     "db": {
       "host": "aws-0-eu-west-2.pooler.supabase.com",
