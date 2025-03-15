@@ -15,19 +15,24 @@
   "mcpServers": {
     "supabase": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-postgres", "postgresql://postgres.oxobdlvtwgzxnpkbvmz:Foreverdflava0%23@aws-0-eu-west-2.pooler.supabase.com:5432/postgres?sslmode=require"]
+      "args": ["-y", "@modelcontextprotocol/server-postgres", "postgresql://postgres.oxobdlvtrwgzxnpkbvmz:FRwbzkgrrCxKbsYF@aws-0-eu-west-2.pooler.supabase.com:5432/postgres"]
+    },
+    "browser-tools": {
+      "command": "npx",
+      "args": ["@agentdeskai/browser-tools-mcp@1.2.0"]
     }
   },
   "supabase": {
-    "url": "https://oxobdlvtwgzxnpkbvmz.supabase.co",
+    "url": "https://oxobdlvtrwgzxnpkbvmz.supabase.co",
     "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94b2JkbHZ0cndnenhucGtidm16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE4NzU4NjMsImV4cCI6MjA1NzQ1MTg2M30.QAprkWsOEvYGl_vdV6bXveuh7ZcEF1N5TZoWuGGE_ys",
     "db": {
       "host": "aws-0-eu-west-2.pooler.supabase.com",
       "port": 5432,
       "database": "postgres",
-      "user": "postgres.oxobdlvtwgzxnpkbvmz",
-      "password": "Foreverdflava0%23",
-      "ssl": true
+      "user": "postgres.oxobdlvtrwgzxnpkbvmz",
+      "password": "FRwbzkgrrCxKbsYF",
+      "ssl": true,
+      "version": "15"
     }
   }
 } 
