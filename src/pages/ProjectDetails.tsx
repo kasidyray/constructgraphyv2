@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import AuthLayout from "@/components/layout/AuthLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Project, ProjectImage } from "@/types";
-import ProjectLoading from "@/components/project/ProjectLoading";
+import ProjectDetailsSkeleton from "@/components/ui/ProjectDetailsSkeleton";
 import { 
   AdminProjectView, 
   BuilderProjectView, 
@@ -157,10 +157,11 @@ const ProjectDetails: React.FC = () => {
     }
   };
 
+  // Show skeleton loading while project data is loading
   if (loading) {
     return (
       <AuthLayout>
-        <ProjectLoading />
+        <ProjectDetailsSkeleton />
       </AuthLayout>
     );
   }

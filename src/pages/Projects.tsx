@@ -10,6 +10,7 @@ import { getUserById } from "@/services/userService";
 import NewProjectDialog from "@/components/dashboard/NewProjectDialog";
 import { toast } from "sonner";
 import ProjectList from "@/components/dashboard/ProjectList";
+import ProjectsSkeleton from "@/components/ui/ProjectsSkeleton";
 
 const Projects: React.FC = () => {
   const { user } = useAuth();
@@ -114,6 +115,15 @@ const Projects: React.FC = () => {
     pageTitle = `${firstName}'s Projects`;
   }
 
+  // Show skeleton loading while projects are loading
+  if (loading) {
+    return (
+      <AuthLayout>
+        <ProjectsSkeleton />
+      </AuthLayout>
+    );
+  }
+
   return (
     <AuthLayout>
       <div className="container mx-auto px-4 md:max-w-screen-xl py-8">
@@ -145,20 +155,11 @@ const Projects: React.FC = () => {
           )}
         </div>
         
-        {loading ? (
-          <div className="flex h-64 items-center justify-center">
-            <div className="flex flex-col items-center space-y-4">
-              <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-primary"></div>
-              <p className="text-xl">Loading projects...</p>
-            </div>
-          </div>
-        ) : (
-          <ProjectList 
-            projects={projects} 
-            isAdmin={user?.role === "admin"} 
-            onAddProject={() => setShowNewProjectDialog(true)} 
-          />
-        )}
+        <ProjectList 
+          projects={projects} 
+          isAdmin={user?.role === "admin"} 
+          onAddProject={() => setShowNewProjectDialog(true)} 
+        />
       </div>
 
       <NewProjectDialog
