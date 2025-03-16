@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Project, ProjectImage } from "@/types";
+import { Project, ProjectImage, User } from "@/types";
 import ProjectHeader from "@/components/project/ProjectHeader";
 import ProjectPhotoFilters from "@/components/project/shared/ProjectPhotoFilters";
 import ImageGallery from "@/components/ui/ImageGallery";
@@ -7,7 +7,6 @@ import ProjectStatusUpdate from "@/components/project/admin/ProjectStatusUpdate"
 import { toast } from "sonner";
 import { updateProject } from "@/services/projectService";
 import { updateProjectImage } from "@/services/imageService";
-import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import AdminOnlyMessage from "../admin/AdminOnlyMessage";
 
@@ -62,7 +61,18 @@ const BuilderProjectView: React.FC<BuilderProjectViewProps> = ({
     
     setIsUpdating(true);
     try {
-      const updatedProject = await updateProject(project.id, updatedProjectData, user);
+      // Convert AuthUser to User type if needed
+      const userForUpdate = user ? {
+        id: user.id,
+        email: user.email,
+        name: user.first_name && user.last_name 
+          ? `${user.first_name} ${user.last_name}` 
+          : user.email,
+        role: user.role,
+        createdAt: user.created_at
+      } as User : undefined;
+      
+      const updatedProject = await updateProject(project.id, updatedProjectData, userForUpdate);
       onProjectUpdate(updatedProject);
       setShowAdminOnlyMessage(false);
     } catch (error) {
@@ -94,85 +104,49 @@ const BuilderProjectView: React.FC<BuilderProjectViewProps> = ({
         isAdmin={false}
       />
       
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 mt-6">
-        <div className="col-span-2">
-          <div className="mb-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-              <h2 className="text-2xl font-bold mb-4 md:mb-0">Project Photos</h2>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <ProjectPhotoFilters
-                  yearFilter={yearFilter}
-                  setYearFilter={setYearFilter}
-                  monthFilter={monthFilter}
-                  setMonthFilter={setMonthFilter}
-                />
-              </div>
-            </div>
-            
-            {filteredImages.length > 0 ? (
-              <ImageGallery 
-                images={filteredImages} 
-                editable={true}
-                onDelete={onImageDelete}
-                onUpdate={(imageId, updates) => {
-                  updateProjectImage(imageId, updates)
-                    .then(updatedImage => {
-                      if (updatedImage) {
-                        onImageUpdate(updatedImage);
-                      }
-                    })
-                    .catch(error => {
-                      console.error("Error updating image:", error);
-                      toast.error("Failed to update image");
-                    });
-                }}
+      <div className="mt-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+          <h2 className="text-2xl font-bold mb-4 md:mb-0">Project Photos</h2>
+          <div className="w-full md:w-auto overflow-x-auto">
+            <div className="flex flex-row items-center gap-2 min-w-max">
+              <ProjectPhotoFilters
+                yearFilter={yearFilter}
+                setYearFilter={setYearFilter}
+                monthFilter={monthFilter}
+                setMonthFilter={setMonthFilter}
               />
-            ) : (
-              <div className="text-center py-12 border border-dashed rounded-lg">
-                <p className="text-muted-foreground mb-4">No photos found for the selected filters</p>
-              </div>
-            )}
+            </div>
           </div>
         </div>
         
-        <div className="space-y-6">
-          <div className="rounded-lg border bg-card shadow-sm">
-            <div className="p-6">
-              <h2 className="mb-4 text-xl font-semibold">Project Details</h2>
-              <dl className="space-y-4">
-                <div>
-                  <dt className="text-sm font-medium text-muted-foreground">Status</dt>
-                  <dd className="mt-1 capitalize">{project.status.replace("-", " ")}</dd>
-                </div>
-                <hr className="my-2" />
-                <div>
-                  <dt className="text-sm font-medium text-muted-foreground">Homeowner</dt>
-                  <dd className="mt-1">{project.homeownerName}</dd>
-                </div>
-                <hr className="my-2" />
-                <div>
-                  <dt className="text-sm font-medium text-muted-foreground">Address</dt>
-                  <dd className="mt-1">{project.address}</dd>
-                </div>
-                <hr className="my-2" />
-                <div>
-                  <dt className="text-sm font-medium text-muted-foreground">Created On</dt>
-                  <dd className="mt-1">{new Date(project.createdAt).toLocaleDateString()}</dd>
-                </div>
-                <hr className="my-2" />
-                <div>
-                  <dt className="text-sm font-medium text-muted-foreground">Last Updated</dt>
-                  <dd className="mt-1">{new Date(project.updatedAt).toLocaleDateString()}</dd>
-                </div>
-              </dl>
-            </div>
+        {filteredImages.length > 0 ? (
+          <div className="relative">
+            <ImageGallery 
+              images={filteredImages} 
+              editable={true}
+              onDelete={onImageDelete}
+              onUpdate={(imageId, updates) => {
+                updateProjectImage(imageId, updates)
+                  .then(updatedImage => {
+                    if (updatedImage) {
+                      onImageUpdate(updatedImage);
+                    }
+                  })
+                  .catch(error => {
+                    console.error("Error updating image:", error);
+                    toast.error("Failed to update image");
+                  });
+              }}
+            />
           </div>
-          
-          <ProjectStatusUpdate 
-            project={project}
-            onProjectUpdate={onProjectUpdate}
-          />
-        </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <h3 className="text-lg font-medium">No photos found</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              No photos match your current filters.
+            </p>
+          </div>
+        )}
       </div>
 
       {showAdminOnlyMessage && (
