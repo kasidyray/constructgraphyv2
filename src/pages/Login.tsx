@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import LoginForm from "@/components/auth/LoginForm";
+import LazyImage from "@/components/ui/LazyImage";
 
 const Login: React.FC = () => {
   const {
@@ -28,7 +29,11 @@ const Login: React.FC = () => {
       {/* Left side - Image and caption */}
       <div className="relative hidden w-1/2 lg:block">
         <div className="absolute inset-0 bg-black/40">
-          <img src="https://images.unsplash.com/photo-1460574283810-2aab119d8511" alt="Construction site" className="h-full w-full object-cover" />
+          <LazyImage 
+            src="https://images.unsplash.com/photo-1460574283810-2aab119d8511" 
+            alt="Construction site" 
+            className="h-full w-full object-cover" 
+          />
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-[#D1522E]/60 via-black/40 to-black/60" />
         
@@ -51,7 +56,11 @@ const Login: React.FC = () => {
       {/* Right side - Login form */}
       <div className="flex w-full flex-col justify-center bg-white px-8 lg:w-1/2">
         <div className="mb-6 flex justify-center">
-          <img src="/lovable-uploads/f03a9d6d-3e35-4b47-a5da-11e2eb0d92b1.png" alt="BuildTracker" className="h-8" />
+          <LazyImage 
+            src="/lovable-uploads/f03a9d6d-3e35-4b47-a5da-11e2eb0d92b1.png" 
+            alt="BuildTracker" 
+            className="h-8" 
+          />
         </div>
         {justLoggedOut && (
           <div className="mb-4 rounded-md bg-green-50 p-4 text-green-800">

@@ -7,11 +7,11 @@ import logger from '@/utils/logger';
 const mailgun = new Mailgun(formData);
 const mg = mailgun.client({
   username: 'api',
-  key: process.env.VITE_MAILGUN_API_KEY || ''
+  key: import.meta.env.VITE_MAILGUN_API_KEY || ''
 });
 
-const DOMAIN = process.env.VITE_MAILGUN_DOMAIN || 'sandbox-domain.mailgun.org';
-const FROM_EMAIL = process.env.VITE_FROM_EMAIL || 'noreply@constructography.com';
+const DOMAIN = import.meta.env.VITE_MAILGUN_DOMAIN || 'sandbox-domain.mailgun.org';
+const FROM_EMAIL = import.meta.env.VITE_FROM_EMAIL || 'noreply@constructography.com';
 
 /**
  * Send a welcome email to a new user

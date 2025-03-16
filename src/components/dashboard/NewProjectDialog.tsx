@@ -183,11 +183,24 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
     setThumbnail("");
   };
 
-  const handleDialogClose = () => {
-    if (onClose) {
-      onClose();
+  const handleDialogClose = (open: boolean) => {
+    // Only prevent closing by clicking outside when dialog is open
+    // Allow closing when explicitly requested (e.g., by clicking the X button)
+    if (!open) {
+      // If dialog is being closed
+      if (isSubmitting) {
+        // Don't allow closing while submitting
+        return;
+      }
+      
+      if (onClose) {
+        onClose();
+      } else {
+        onOpenChange(open);
+      }
     } else {
-      onOpenChange(false);
+      // If dialog is being opened, always allow
+      onOpenChange(open);
     }
   };
 
@@ -240,15 +253,15 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="status">Status *</Label>
-                <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger id="status">
-                    <SelectValue placeholder="Select status" />
+                <Label htmlFor="homeowner" className="capitalize-text">Homeowner *</Label>
+                <Select value={homeownerId} onValueChange={setHomeownerId} disabled={!!preSelectedHomeownerId || !!propHomeownerId}>
+                  <SelectTrigger id="homeowner">
+                    <SelectValue placeholder="Select homeowner" />
                   </SelectTrigger>
                   <SelectContent>
-                    {PROJECT_STATUSES.map((status) => (
-                      <SelectItem key={status.value} value={status.value}>
-                        {status.label}
+                    {homeowners.map((homeowner) => (
+                      <SelectItem key={homeowner.id} value={homeowner.id} className="capitalize-text">
+                        {homeowner.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -256,88 +269,80 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="homeowner">Homeowner *</Label>
-                <Select 
-                  value={homeownerId} 
-                  onValueChange={setHomeownerId}
-                  disabled={!!propHomeownerId || !!preSelectedHomeownerId}
-                >
-                  <SelectTrigger id="homeowner">
-                    <SelectValue placeholder="Select homeowner" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {homeowners.length > 0 ? (
-                      homeowners.map((homeowner) => (
-                        <SelectItem key={homeowner.id} value={homeowner.id}>
-                          {homeowner.name}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="no-homeowners" disabled>
-                        No homeowners found
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="builder">Builder (Optional)</Label>
+                <Label htmlFor="builder" className="capitalize-text">Builder</Label>
                 <Select value={builderId} onValueChange={setBuilderId}>
                   <SelectTrigger id="builder">
                     <SelectValue placeholder="Select builder" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">No builder</SelectItem>
-                    {builders.length > 0 ? (
-                      builders.map((builder) => (
-                        <SelectItem key={builder.id} value={builder.id}>
-                          {builder.name}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="no-builders" disabled>
-                        No builders found
+                    <SelectItem value="none">None</SelectItem>
+                    {builders.map((builder) => (
+                      <SelectItem key={builder.id} value={builder.id} className="capitalize-text">
+                        {builder.name}
                       </SelectItem>
-                    )}
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="thumbnail">Thumbnail URL (Optional)</Label>
-                <Input
-                  id="thumbnail"
-                  placeholder="https://example.com/image.jpg"
-                  value={thumbnail}
-                  onChange={(e) => setThumbnail(e.target.value)}
-                />
+            </div>
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status *</Label>
+                  <Select value={status} onValueChange={setStatus}>
+                    <SelectTrigger id="status">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PROJECT_STATUSES.map((status) => (
+                        <SelectItem key={status.value} value={status.value}>
+                          {status.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="progress">Progress: {progress}%</Label>
+                  <Slider
+                    id="progress"
+                    value={[progress]}
+                    min={0}
+                    max={100}
+                    step={5}
+                    onValueChange={(value) => setProgress(value[0])}
+                    className="py-2"
+                  />
+                </div>
               </div>
             </div>
             
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <Label htmlFor="progress">Progress ({progress}%)</Label>
-                <span className="text-sm text-muted-foreground">{progress}%</span>
-              </div>
-              <Slider
-                id="progress"
-                min={0}
-                max={100}
-                step={5}
-                value={[progress]}
-                onValueChange={(values) => setProgress(values[0])}
-              />
-            </div>
-            
-            <div className="flex justify-end pt-4">
-              <Button type="button" variant="outline" className="mr-2" onClick={handleDialogClose}>
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  if (onClose) {
+                    onClose();
+                  } else {
+                    onOpenChange(false);
+                  }
+                }}
+                disabled={isSubmitting}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create Project"}
+                {isSubmitting ? (
+                  <>
+                    <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></span>
+                    Creating...
+                  </>
+                ) : (
+                  "Create Project"
+                )}
               </Button>
             </div>
           </form>

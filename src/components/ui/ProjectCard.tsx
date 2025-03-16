@@ -2,9 +2,10 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Project } from "@/types";
-import { Calendar, MapPin } from "lucide-react";
+import { Calendar, MapPin, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import LazyImage from './LazyImage';
 
 interface ProjectCardProps {
   project: Project;
@@ -51,16 +52,12 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
     <Link to={`/projects/${project.id}`} className="block h-full">
       <Card className={`overflow-hidden transition-all duration-300 hover:shadow-md h-full ${className}`}>
         <div className="relative h-48 w-full overflow-hidden">
-          {project.thumbnail ? (
-            <img
+          {project.thumbnail && (
+            <LazyImage
               src={project.thumbnail}
               alt={project.title}
               className="h-full w-full object-cover transition-transform duration-500 ease-in-out hover:scale-105"
             />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center bg-muted">
-              <span className="text-muted-foreground">No Image</span>
-            </div>
           )}
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
             <Badge 
@@ -97,7 +94,10 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
               <Calendar size={14} />
               <span>Updated {formatDate(project.updatedAt)}</span>
             </div>
-            <span>{project.homeownerName}</span>
+            <div className="flex items-center text-sm text-muted-foreground">
+              <User className="mr-1 h-4 w-4" />
+              <span className="capitalize-text">{project.homeownerName}</span>
+            </div>
           </div>
         </CardFooter>
       </Card>

@@ -120,9 +120,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
             <h2 className="text-3xl font-bold tracking-tight">
               Welcome back, {
                 user.first_name 
-                  ? user.first_name.charAt(0).toUpperCase() + user.first_name.slice(1)
+                  ? <span className="capitalize-text">{user.first_name}</span>
                   : user.name 
-                    ? user.name.split(' ')[0].charAt(0).toUpperCase() + user.name.split(' ')[0].slice(1)
+                    ? <span className="capitalize-text">{user.name.split(' ')[0]}</span>
                     : 'Admin'
               }
             </h2>

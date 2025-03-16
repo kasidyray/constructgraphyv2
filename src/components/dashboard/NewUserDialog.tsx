@@ -133,9 +133,27 @@ const NewUserDialog: React.FC<NewUserDialogProps> = ({
     setPhoneNumber("");
     setBuilderPhoneNumber("");
   };
+  
+  // Handle dialog close - prevent closing by clicking outside
+  const handleDialogClose = (open: boolean) => {
+    // Only prevent closing by clicking outside when dialog is open
+    // Allow closing when explicitly requested (e.g., by clicking the X button)
+    if (!open) {
+      // If dialog is being closed
+      if (isSubmitting) {
+        // Don't allow closing while submitting
+        return;
+      }
+      
+      onOpenChange(open);
+    } else {
+      // If dialog is being opened, always allow
+      onOpenChange(open);
+    }
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Create New User</DialogTitle>
@@ -159,21 +177,23 @@ const NewUserDialog: React.FC<NewUserDialogProps> = ({
             <TabsContent value="homeowner" className="space-y-4 pt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="firstName" className="capitalize-text">First Name</Label>
                   <Input
                     id="firstName"
                     placeholder="John"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
+                    className="capitalize-text"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="lastName" className="capitalize-text">Last Name</Label>
                   <Input
                     id="lastName"
                     placeholder="Doe"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
+                    className="capitalize-text"
                   />
                 </div>
               </div>
@@ -201,12 +221,13 @@ const NewUserDialog: React.FC<NewUserDialogProps> = ({
             
             <TabsContent value="builder" className="space-y-4 pt-4">
               <div className="space-y-2">
-                <Label htmlFor="nameBuilder">Name</Label>
+                <Label htmlFor="nameBuilder" className="capitalize-text">Name</Label>
                 <Input
                   id="nameBuilder"
                   placeholder="Builder Company Name"
                   value={nameBuilder}
                   onChange={(e) => setNameBuilder(e.target.value)}
+                  className="capitalize-text"
                 />
               </div>
               <div className="space-y-2">
@@ -231,8 +252,13 @@ const NewUserDialog: React.FC<NewUserDialogProps> = ({
               </div>
             </TabsContent>
             
-            <div className="flex justify-end mt-6">
-              <Button type="button" variant="outline" className="mr-2" onClick={() => onOpenChange(false)}>
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>

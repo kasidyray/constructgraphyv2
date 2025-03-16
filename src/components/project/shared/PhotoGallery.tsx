@@ -7,6 +7,7 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
+import LazyImage from "@/components/ui/LazyImage";
 
 interface PhotoGalleryProps {
   images: ProjectImage[];
@@ -76,7 +77,7 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
               setPreviewOpen(true);
             }}
           >
-            <img
+            <LazyImage
               src={image.url}
               alt={image.caption}
               className="h-full w-full object-cover"
@@ -166,7 +167,7 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
               
               {/* Image */}
               <div className="flex-1 flex items-center justify-center p-4 relative">
-                <img
+                <LazyImage
                   src={previewImage.url}
                   alt={previewImage.caption}
                   className="max-h-full max-w-full object-contain"

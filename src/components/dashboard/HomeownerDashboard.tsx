@@ -44,15 +44,14 @@ const HomeownerDashboard: React.FC<HomeownerDashboardProps> = ({
   }, [user.id]);
 
   // Extract first name from email or use available name
-  const firstName = user.email.split('@')[0];
-  const displayName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+  const firstName = user.first_name || user.name?.split(' ')[0] || user.email.split('@')[0];
 
   return (
     <div className="container mx-auto px-4 md:max-w-screen-xl py-8">
       <div className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight">My Projects</h1>
         <p className="text-muted-foreground">
-          Welcome back, {displayName}!
+          Welcome back, <span className="capitalize-text">{firstName}</span>!
         </p>
       </div>
 

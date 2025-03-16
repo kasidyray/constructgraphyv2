@@ -23,6 +23,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import PhotoUploader from "./admin/PhotoUploader";
+import LazyImage from "@/components/ui/LazyImage";
 
 interface ProjectOverviewProps {
   project: Project;
@@ -284,7 +285,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
                       setPreviewOpen(true);
                     }}
                   >
-                    <img
+                    <LazyImage
                       src={image.url}
                       alt={image.caption}
                       className="h-full w-full object-cover"
@@ -375,7 +376,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
                     
                     {/* Image */}
                     <div className="flex-1 flex items-center justify-center p-4 relative">
-                      <img
+                      <LazyImage
                         src={previewImage.url}
                         alt={previewImage.caption}
                         className="max-h-full max-w-full object-contain"

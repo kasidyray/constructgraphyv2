@@ -160,4 +160,9 @@
   .delay-500 {
     animation-delay: 500ms;
   }
+
+  /* Capitalized text for names */
+  .capitalize-text {
+    text-transform: capitalize;
+  }
 }

@@ -108,9 +108,9 @@ const BuilderDashboard: React.FC<BuilderDashboardProps> = ({
           <p className="text-muted-foreground">
             Welcome back, {
               user.first_name 
-                ? user.first_name.charAt(0).toUpperCase() + user.first_name.slice(1)
+                ? <span className="capitalize-text">{user.first_name}</span>
                 : user.name 
-                  ? user.name.split(' ')[0].charAt(0).toUpperCase() + user.name.split(' ')[0].slice(1)
+                  ? <span className="capitalize-text">{user.name.split(' ')[0]}</span>
                   : 'Builder'
             }!
           </p>

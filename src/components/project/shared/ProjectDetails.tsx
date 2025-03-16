@@ -33,8 +33,8 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
           </div>
           <Separator />
           <div>
-            <dt className="text-sm font-medium text-muted-foreground">Homeowner</dt>
-            <dd className="mt-1">{project.homeownerName}</dd>
+            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Homeowner</dt>
+            <dd className="mt-1 capitalize-text">{project.homeownerName}</dd>
           </div>
           <Separator />
           <div>
