@@ -59,18 +59,22 @@ const Header: React.FC = () => {
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
+              <Link to="/dashboard">
+                <img 
+                  src="/lovable-uploads/f03a9d6d-3e35-4b47-a5da-11e2eb0d92b1.png" 
+                  alt="Constructgraphy" 
+                  className="h-8 hidden md:block cursor-pointer" 
+                />
+              </Link>
+            </>
+          ) : (
+            <Link to="/dashboard">
               <img 
                 src="/lovable-uploads/f03a9d6d-3e35-4b47-a5da-11e2eb0d92b1.png" 
                 alt="Constructgraphy" 
-                className="h-8 hidden md:block" 
+                className="h-8 cursor-pointer" 
               />
-            </>
-          ) : (
-            <img 
-              src="/lovable-uploads/f03a9d6d-3e35-4b47-a5da-11e2eb0d92b1.png" 
-              alt="Constructgraphy" 
-              className="h-8" 
-            />
+            </Link>
           )}
         </div>
 

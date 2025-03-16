@@ -129,11 +129,6 @@ const Projects: React.FC = () => {
       <div className="container mx-auto px-4 md:max-w-screen-xl py-8">
         <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div className="flex items-center gap-4">
-            {(homeownerId || urlBuilderId) && (
-              <Button variant="ghost" size="icon" onClick={handleBack} className="mr-2">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            )}
             <div>
               <h1 className="text-3xl font-bold tracking-tight">{pageTitle}</h1>
               {user && (

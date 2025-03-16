@@ -82,25 +82,16 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, isAdmin }) => {
         <div className="flex gap-2 items-center">
           {isAdmin && (
             <>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="mr-2">
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
               </Button>
-              <Button variant="destructive" size="sm">
+              <Button variant="destructive" size="sm" className="mr-2">
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete
               </Button>
             </>
           )}
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleGoBack}
-            className="hidden md:flex"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
         </div>
       </div>
       
