@@ -1,12 +1,13 @@
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { User } from '@/types';
 import { mockUsers } from '@/data/mockData';
+import { v4 as uuidv4 } from 'uuid';
 
 // Get all users
 export async function getUsers(): Promise<User[]> {
   try {
     const { data, error } = await supabaseAdmin
-      .from('users')
+      .from('profiles')
       .select('*');
     
     if (error) {
@@ -33,7 +34,7 @@ export const getUserById = async (id: string): Promise<User | null> => {
     
     try {
       const { data, error } = await supabaseAdmin
-        .from('users')
+        .from('profiles')
         .select('*')
         .eq('id', id)
         .single();
@@ -58,7 +59,7 @@ export const getUserById = async (id: string): Promise<User | null> => {
 export async function getUserByEmail(email: string): Promise<User | null> {
   try {
     const { data, error } = await supabaseAdmin
-      .from('users')
+      .from('profiles')
       .select('*')
       .eq('email', email.toLowerCase())
       .single();
@@ -77,25 +78,33 @@ export async function getUserByEmail(email: string): Promise<User | null> {
 
 // Create a new user
 export async function createUser(user: Omit<User, 'id' | 'createdAt'>): Promise<User | null> {
-  const newUser = {
-    ...user,
-    email: user.email.toLowerCase(),
-    createdAt: new Date(),
-  };
-  
   try {
-    const { data, error } = await supabaseAdmin
-      .from('users')
-      .insert(newUser)
+    // Generate UUID client-side - more reliable than RPC calls
+    const uuid = uuidv4();
+    
+    // Create a new profile with a unique ID
+    const newProfile = {
+      id: uuid,
+      email: user.email.toLowerCase(),
+      name: user.name,
+      role: user.role,
+      phone: user.phone,
+      createdAt: new Date().toISOString(),
+      ...(user.builderId && { builderId: user.builderId })
+    };
+    
+    const { data: profileData, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .insert(newProfile)
       .select()
       .single();
     
-    if (error) {
-      console.error('Error creating user in Supabase:', error);
-      throw new Error(`Failed to create user: ${error.message}`);
+    if (profileError) {
+      console.error('Error creating profile in Supabase:', profileError);
+      throw new Error(`Failed to create profile: ${profileError.message}`);
     }
     
-    return data;
+    return profileData;
   } catch (error) {
     console.error('Error connecting to Supabase:', error);
     throw error;
@@ -106,7 +115,7 @@ export async function createUser(user: Omit<User, 'id' | 'createdAt'>): Promise<
 export async function updateUser(id: string, updates: Partial<User>): Promise<User | null> {
   try {
     const { data, error } = await supabaseAdmin
-      .from('users')
+      .from('profiles')
       .update(updates)
       .eq('id', id)
       .select()

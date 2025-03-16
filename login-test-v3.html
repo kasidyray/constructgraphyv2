@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Test v3</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            cursor: pointer;
+            background-color: #D1522E;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .result {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        input {
+            padding: 8px;
+            margin: 5px 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Direct Supabase Login Test (v3)</h1>
+    
+    <div>
+        <label for="email">Email:</label>
+        <input type="email" id="email" value="admin@example.com">
+        
+        <label for="password">Password:</label>
+        <input type="password" id="password" value="password123">
+        
+        <button id="loginBtn">Test Login</button>
+        <button id="clearBtn">Clear Results</button>
+        <button id="goToAppBtn">Go to App (Port 8084)</button>
+    </div>
+    
+    <div class="result" id="result">
+        <p>Results will appear here...</p>
+    </div>
+    
+    <div>
+        <h2>Manual Test Instructions</h2>
+        <p>If the button doesn't work, you can test directly in the browser console with this code:</p>
+        <pre>
+// Copy and paste this into your browser console
+const supabaseUrl = 'https://oxobdlvtrwgzxnpkbvmz.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94b2JkbHZ0cndnenhucGtidm16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE4NzU4NjMsImV4cCI6MjA1NzQ1MTg2M30.QAprkWsOEvYGl_vdV6bXveuh7ZcEF1N5TZoWuGGE_ys';
+
+// Make a direct fetch request to Supabase
+fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'apikey': supabaseKey,
+    'Authorization': `Bearer ${supabaseKey}`
+  },
+  body: JSON.stringify({
+    email: 'admin@example.com',
+    password: 'password123'
+  })
+})
+.then(response => response.json())
+.then(data => {
+  console.log('Login response:', data);
+  if (data.access_token) {
+    console.log('Login successful!');
+  } else {
+    console.log('Login failed:', data.error_description || data.error);
+  }
+})
+.catch(error => {
+  console.error('Error:', error);
+});
+        </pre>
+    </div>
+    
+    <script>
+        document.getElementById('loginBtn').addEventListener('click', async () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.innerHTML = '<p>Testing login with direct API call...</p>';
+            
+            try {
+                console.log('Attempting to sign in with:', { email, password });
+                
+                // Make a direct fetch request to Supabase
+                const supabaseUrl = 'https://oxobdlvtrwgzxnpkbvmz.supabase.co';
+                const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94b2JkbHZ0cndnenhucGtidm16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE4NzU4NjMsImV4cCI6MjA1NzQ1MTg2M30.QAprkWsOEvYGl_vdV6bXveuh7ZcEF1N5TZoWuGGE_ys';
+                
+                const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${supabaseKey}`
+                    },
+                    body: JSON.stringify({
+                        email,
+                        password
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('Login response:', data);
+                
+                resultDiv.innerHTML = `
+                    <h3>Login Result:</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+                
+                if (data.error || data.error_description) {
+                    resultDiv.innerHTML += `
+                        <p style="color: red">Login failed: ${data.error_description || data.error}</p>
+                    `;
+                } else if (data.access_token) {
+                    resultDiv.innerHTML += `
+                        <p style="color: green">Login successful!</p>
+                        <p>User ID: ${data.user.id}</p>
+                        <button id="dashboardBtn">Go to Dashboard</button>
+                    `;
+                    
+                    document.getElementById('dashboardBtn').addEventListener('click', () => {
+                        window.location.href = 'http://localhost:8084/dashboard';
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `
+                    <h3>Error:</h3>
+                    <pre>${error.toString()}</pre>
+                `;
+            }
+        });
+        
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            document.getElementById('result').innerHTML = '<p>Results cleared...</p>';
+        });
+        
+        document.getElementById('goToAppBtn').addEventListener('click', () => {
+            window.location.href = 'http://localhost:8084/login';
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Redirect</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            cursor: pointer;
+            background-color: #D1522E;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Constructography Debug Helper</h1>
+    
+    <h2>Server Information</h2>
+    <p>The development server is running on port 8084. Click the button below to open the application:</p>
+    <button onclick="window.location.href='http://localhost:8084'">Open App on Port 8084</button>
+    
+    <h2>Login Debugging</h2>
+    <p>If you're having issues with login, try these steps:</p>
+    <ol>
+        <li>Clear your browser cache and cookies</li>
+        <li>Try using the direct login URL: <a href="http://localhost:8084/login">http://localhost:8084/login</a></li>
+        <li>Use the admin demo account: admin@example.com / password123</li>
+    </ol>
+    
+    <h2>Authentication Flow</h2>
+    <p>The authentication flow should work as follows:</p>
+    <pre>
+1. User enters credentials on login page
+2. AuthContext.login() is called
+3. Supabase authenticates the user
+4. AuthContext fetches the user profile
+5. User is redirected to dashboard
+    </pre>
+    
+    <h2>Manual Authentication Test</h2>
+    <p>You can test the Supabase authentication directly using the console:</p>
+    <pre>
+// Open browser console (F12) and paste this code:
+const { data, error } = await fetch('http://localhost:8084/api/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ 
+    email: 'admin@example.com', 
+    password: 'password123' 
+  })
+}).then(res => res.json());
+
+console.log({ data, error });
+    </pre>
+</body>
+</html> 

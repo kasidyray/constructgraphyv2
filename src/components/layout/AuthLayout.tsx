@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "./Header";
 import { Loader2 } from "lucide-react";
@@ -15,21 +15,31 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
 }) => {
   const { user, loading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      navigate("/login");
-    } else if (
-      !loading && 
-      isAuthenticated && 
-      requiredRoles.length > 0 && 
-      user && 
-      !requiredRoles.includes(user.role)
-    ) {
-      navigate("/dashboard");
+    // Only proceed with checks after loading is complete
+    if (loading) {
+      return;
     }
-  }, [loading, isAuthenticated, user, navigate, requiredRoles]);
+    
+    // Redirect to login if not authenticated
+    if (!isAuthenticated) {
+      if (location.pathname !== "/login") {
+        navigate("/login");
+      }
+      return;
+    }
+    
+    // Check role requirements if user is authenticated
+    if (user && requiredRoles.length > 0) {
+      if (!requiredRoles.includes(user.role)) {
+        navigate("/dashboard");
+      }
+    }
+  }, [loading, isAuthenticated, user, navigate, requiredRoles, location.pathname]);
 
+  // Show loading state while authentication is being determined
   if (loading) {
     return (
       <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -44,18 +54,15 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
     );
   }
 
+  // Don't render protected content if not authenticated
   if (!isAuthenticated) {
-    return null; // Will redirect to login
-  }
-
-  if (requiredRoles.length > 0 && user && !requiredRoles.includes(user.role)) {
-    return null; // Will redirect to dashboard
+    return null;
   }
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <Header />
-      <main className="flex-1 bg-secondary/30 dark:bg-secondary/10">
+      <main className="flex-1 container mx-auto py-6 px-4 md:px-6">
         {children}
       </main>
     </div>

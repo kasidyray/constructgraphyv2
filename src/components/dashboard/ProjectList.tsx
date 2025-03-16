@@ -1,33 +1,58 @@
-
 import React from "react";
-import { FolderOpen } from "lucide-react";
 import { Project } from "@/types";
 import ProjectCard from "@/components/ui/ProjectCard";
+import AddProjectCard from "@/components/ui/AddProjectCard";
 
 interface ProjectListProps {
   projects: Project[];
+  isAdmin?: boolean;
+  onAddProject?: () => void;
 }
 
-const ProjectList: React.FC<ProjectListProps> = ({ projects }) => {
+const ProjectList: React.FC<ProjectListProps> = ({ 
+  projects, 
+  isAdmin = false, 
+  onAddProject 
+}) => {
+  // Sort projects by updated date
+  const sortedProjects = [...projects]
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+
   if (projects.length === 0) {
-    return (
-      <div className="col-span-full flex h-64 flex-col items-center justify-center rounded-lg border border-dashed text-center">
-        <div className="mb-4 rounded-full bg-muted p-3">
-          <FolderOpen className="h-6 w-6 text-muted-foreground" />
+    // If there are no projects and user is admin, show only the add project card
+    if (isAdmin && onAddProject) {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <AddProjectCard onClick={onAddProject} />
         </div>
-        <h3 className="text-lg font-medium">No projects found</h3>
-        <p className="mt-1 text-sm text-muted-foreground">
-          No projects are currently assigned.
+      );
+    }
+    
+    // Otherwise show a message
+    return (
+      <div className="text-center py-12">
+        <h3 className="text-lg font-medium mb-2">No projects found</h3>
+        <p className="text-muted-foreground mb-6">
+          No projects have been created yet.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {projects.map((project) => (
-        <ProjectCard key={project.id} project={project} />
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {sortedProjects.map((project) => (
+        <ProjectCard 
+          key={project.id} 
+          project={project} 
+          isAdmin={isAdmin} 
+        />
       ))}
+      
+      {/* Add the "Add Project" card at the end for admin users */}
+      {isAdmin && onAddProject && (
+        <AddProjectCard onClick={onAddProject} />
+      )}
     </div>
   );
 };

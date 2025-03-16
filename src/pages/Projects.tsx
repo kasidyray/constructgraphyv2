@@ -4,12 +4,12 @@ import { Plus, Search, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AuthLayout from "@/components/layout/AuthLayout";
 import { useAuth } from "@/contexts/AuthContext";
-import ProjectCard from "@/components/ui/ProjectCard";
 import { Project } from "@/types";
 import { getProjects, getHomeownerProjects, getBuilderProjects } from "@/services/projectService";
 import { getUserById } from "@/services/userService";
 import NewProjectDialog from "@/components/dashboard/NewProjectDialog";
 import { toast } from "sonner";
+import ProjectList from "@/components/dashboard/ProjectList";
 
 const Projects: React.FC = () => {
   const { user } = useAuth();
@@ -62,10 +62,13 @@ const Projects: React.FC = () => {
           setDisplayName(homeowner.name);
         }
       } else if (user?.role === "homeowner") {
+        // Homeowner sees only their own projects
         fetchedProjects = await getHomeownerProjects(user.id);
+        setDisplayName(user.first_name ? `${user.first_name} ${user.last_name || ''}` : user.email || '');
       } else if (user?.role === "builder") {
-        // Use the dedicated function to get builder projects
+        // Builder sees only their assigned projects
         fetchedProjects = await getBuilderProjects(user.id);
+        setDisplayName(user.first_name ? `${user.first_name} ${user.last_name || ''}` : user.email || '');
       } else {
         // Admin sees all projects
         fetchedProjects = await getProjects();
@@ -86,10 +89,6 @@ const Projects: React.FC = () => {
   
   const firstName = displayName ? displayName.split(' ')[0] : '';
   
-  // Sort projects by updated date
-  const filteredProjects = [...projects]
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-
   const handleBack = () => {
     navigate(-1);
   };
@@ -102,10 +101,10 @@ const Projects: React.FC = () => {
     fetchProjects();
     
     toast.success("Project created successfully");
+    
+    // Close the dialog
+    setShowNewProjectDialog(false);
   };
-
-  // Determine if the current user is an admin viewing a homeowner's projects
-  const isAdminViewingHomeowner = user?.role === "admin" && homeownerId;
 
   // Determine page title
   let pageTitle = "Projects";
@@ -118,68 +117,56 @@ const Projects: React.FC = () => {
   return (
     <AuthLayout>
       <div className="container mx-auto px-4 md:max-w-screen-xl py-8">
-        <div className="flex items-center mb-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleBack}
-            className="mr-2"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-2xl font-bold">{pageTitle}</h1>
-          <div className="ml-auto flex gap-2">
-            {(user?.role === "admin" || (user?.role === "builder" && !homeownerId && !effectiveBuilderId)) && (
-              <Button onClick={() => setShowNewProjectDialog(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                New Project
+        <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
+          <div className="flex items-center gap-4">
+            {(homeownerId || urlBuilderId) && (
+              <Button variant="ghost" size="icon" onClick={handleBack} className="mr-2">
+                <ArrowLeft className="h-5 w-5" />
               </Button>
             )}
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">{pageTitle}</h1>
+              {user && (
+                <p className="text-muted-foreground">
+                  {homeownerId || urlBuilderId 
+                    ? `Viewing projects for ${displayName}`
+                    : `Viewing all projects`}
+                </p>
+              )}
+            </div>
           </div>
+          
+          {/* Only show the New Project button for admins */}
+          {user?.role === "admin" && !loading && (
+            <Button onClick={() => setShowNewProjectDialog(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              New Project
+            </Button>
+          )}
         </div>
-
+        
         {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          </div>
-        ) : filteredProjects.length === 0 ? (
-          <div className="text-center py-12">
-            <h3 className="text-lg font-medium mb-2">No projects found</h3>
-            <p className="text-muted-foreground mb-6">
-              {user?.role === "homeowner" 
-                ? "You don't have any projects yet. Your builder will create one for you."
-                : "No projects have been created yet."}
-            </p>
-            {(user?.role === "admin" || user?.role === "builder") && !homeownerId && !effectiveBuilderId && (
-              <Button onClick={() => setShowNewProjectDialog(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create your first project
-              </Button>
-            )}
+          <div className="flex h-64 items-center justify-center">
+            <div className="flex flex-col items-center space-y-4">
+              <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-primary"></div>
+              <p className="text-xl">Loading projects...</p>
+            </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProjects.map((project) => (
-              <ProjectCard 
-                key={project.id} 
-                project={project} 
-                isAdmin={user?.role === "admin"} 
-                isBuilder={user?.role === "builder"}
-              />
-            ))}
-          </div>
+          <ProjectList 
+            projects={projects} 
+            isAdmin={user?.role === "admin"} 
+            onAddProject={() => setShowNewProjectDialog(true)} 
+          />
         )}
       </div>
 
-      {showNewProjectDialog && (
-        <NewProjectDialog
-          open={showNewProjectDialog}
-          onOpenChange={(open) => setShowNewProjectDialog(open)}
-          onClose={() => setShowNewProjectDialog(false)}
-          onProjectCreated={handleProjectCreated}
-          homeownerId={homeownerId}
-        />
-      )}
+      <NewProjectDialog
+        open={showNewProjectDialog}
+        onOpenChange={setShowNewProjectDialog}
+        onProjectCreated={handleProjectCreated}
+        homeownerId={homeownerId}
+      />
     </AuthLayout>
   );
 };

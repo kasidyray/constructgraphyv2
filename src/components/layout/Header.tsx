@@ -2,9 +2,10 @@ import React from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Home, LogOut, Settings, User, ArrowLeft } from "lucide-react";
+import { Home, LogOut, Settings, User as UserIcon, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import UserAvatar from "@/components/ui/UserAvatar";
+import { User } from "@/types";
 
 const Header: React.FC = () => {
   const {
@@ -18,14 +19,31 @@ const Header: React.FC = () => {
   // Check if we're on a project detail page
   const isProjectDetailPage = location.pathname.startsWith('/projects/') && location.pathname.split('/').length > 2;
   
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
+  const handleLogout = async () => {
+    // Let the AuthContext's logout function handle the redirection
+    await logout();
+    // No need to navigate here as the logout function will redirect
   };
   
   const handleGoBack = () => {
     navigate(-1);
   };
+
+  // Convert AuthUser to User type expected by UserAvatar
+  const avatarUser: User | null = user ? {
+    id: user.id,
+    email: user.email,
+    name: user.first_name && user.last_name 
+      ? `${user.first_name} ${user.last_name}` 
+      : user.email,
+    role: user.role,
+    createdAt: user.created_at
+  } : null;
+  
+  // Get display name for the dropdown with capitalized first letter
+  const displayName = user?.first_name && user?.last_name
+    ? `${user.first_name.charAt(0).toUpperCase() + user.first_name.slice(1)} ${user.last_name.charAt(0).toUpperCase() + user.last_name.slice(1)}`
+    : user?.email.split('@')[0].charAt(0).toUpperCase() + user?.email.split('@')[0].slice(1); // Capitalize username part of email
   
   return <header className="glass sticky top-0 z-50 border-b border-border/40 shadow-sm backdrop-blur-md">
       <div className="container mx-auto px-4 md:max-w-screen-xl flex h-16 items-center justify-between">
@@ -66,40 +84,45 @@ const Header: React.FC = () => {
         <div className="flex items-center space-x-4">
           {isAuthenticated ? <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                  <UserAvatar user={user} size="md" />
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full focus-visible:ring-0 focus-visible:ring-offset-0">
+                  <UserAvatar user={avatarUser} size="md" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-56 [&_*]:focus-visible:ring-0 [&_*]:focus-visible:ring-offset-0 [&_*]:focus-visible:outline-none">
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user?.name}</p>
+                    <p className="text-sm font-medium leading-none">
+                      {displayName}
+                    </p>
                     <p className="text-xs leading-none text-muted-foreground">
                       {user?.email}
                     </p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/dashboard" className="flex cursor-pointer items-center">
+                <DropdownMenuItem asChild className="hover:border-transparent">
+                  <Link to="/dashboard" className="flex cursor-pointer items-center w-full">
                     <Home className="mr-2 h-4 w-4" />
                     <span>Dashboard</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="#" className="flex cursor-pointer items-center">
-                    <User className="mr-2 h-4 w-4" />
+                <DropdownMenuItem asChild className="hover:border-transparent">
+                  <Link to="#" className="flex cursor-pointer items-center w-full">
+                    <UserIcon className="mr-2 h-4 w-4" />
                     <span>Profile</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="#" className="flex cursor-pointer items-center">
+                <DropdownMenuItem asChild className="hover:border-transparent">
+                  <Link to="#" className="flex cursor-pointer items-center w-full">
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="flex cursor-pointer items-center text-destructive focus:text-destructive" onClick={handleLogout}>
+                <DropdownMenuItem 
+                  className="flex cursor-pointer items-center text-destructive hover:border-transparent" 
+                  onClick={handleLogout}
+                >
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
                 </DropdownMenuItem>

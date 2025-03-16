@@ -1,141 +1,188 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
 
-const LoginForm: React.FC = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const {
-    login
-  } = useAuth();
-  const navigate = useNavigate();
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) {
-      toast({
-        title: "Missing information",
-        description: "Please enter both email and password",
-        variant: "destructive"
-      });
-      return;
-    }
-    setIsSubmitting(true);
+const formSchema = z.object({
+  email: z.string().email({
+    message: "Please enter a valid email address.",
+  }),
+  password: z.string().min(6, {
+    message: "Password must be at least 6 characters.",
+  }),
+});
+
+function LoginForm() {
+  const { login } = useAuth();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: "admin@example.com",
+      password: "password123",
+    },
+  });
+
+  async function handleSubmit(values: z.infer<typeof formSchema>) {
+    setIsLoading(true);
+    
     try {
-      await login(email, password);
-      navigate("/dashboard");
+      const result = await login(values.email, values.password);
+      
+      if (result.error) {
+        toast({
+          variant: "destructive",
+          title: "Login Failed",
+          description: result.error,
+        });
+        setIsLoading(false);
+      } else {
+        toast({
+          title: "Login Successful",
+          description: "Redirecting to dashboard...",
+        });
+        
+        // Use a short timeout to ensure the toast is shown before redirect
+        setTimeout(() => {
+          // Use direct navigation to ensure page reload and state reset
+          window.location.href = "/dashboard";
+        }, 500);
+      }
     } catch (error) {
-      // Error is handled in the AuthContext
-      console.error("Login error:", error);
-    } finally {
-      setIsSubmitting(false);
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: "An unexpected error occurred. Please try again.",
+      });
+      setIsLoading(false);
     }
-  };
+  }
 
-  // Demo account information - updated to match Supabase Auth users
-  const demoAccounts = [
-    {
-      role: "Admin",
-      email: "admin@consto.com",
-      password: "password123"
-    }, 
-    {
-      role: "Builder",
-      email: "builder@consto.com",
-      password: "password123"
-    }, 
-    {
-      role: "Homeowner",
-      email: "homeowner@consto.com",
-      password: "password123"
+  function handleDemoLogin(role: string) {
+    let email = "";
+    const password = "password123";
+
+    switch (role) {
+      case "admin":
+        email = "admin@example.com";
+        break;
+      case "builder":
+        email = "builder@example.com";
+        break;
+      case "homeowner":
+        email = "homeowner@example.com";
+        break;
+      default:
+        return;
     }
-  ];
-  
-  const loginAsDemoUser = (demoEmail: string, demoPassword: string) => {
-    setEmail(demoEmail);
-    setPassword(demoPassword);
-  };
-  
-  return <div className="mx-auto w-full max-w-md px-4 my-[40px]">
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Welcome back!</h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Sign into your constructography account to continue.
+
+    form.setValue("email", email);
+    form.setValue("password", password);
+  }
+
+  return (
+    <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+      <div className="flex flex-col space-y-2 text-center">
+        <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
+        <p className="text-sm text-muted-foreground">
+          Enter your credentials to sign in to your account
         </p>
       </div>
-      
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor="email" className="sr-only">Email</Label>
-          <Input id="email" type="email" placeholder="name@example.com" value={email} onChange={e => setEmail(e.target.value)} disabled={isSubmitting} required className="h-12" />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="password" className="sr-only">Password</Label>
-          <Input id="password" type="password" placeholder="••••••••••" value={password} onChange={e => setPassword(e.target.value)} disabled={isSubmitting} required className="h-12" />
-        </div>
-        
-        <Button type="submit" className="h-12 w-full bg-[#D1522E] hover:bg-[#D1522E]/90" disabled={isSubmitting}>
-          {isSubmitting ? <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Signing in...
-            </> : "Log in"}
-        </Button>
-        
-        <div className="text-center">
-          <Button 
-            variant="link" 
-            className="text-sm text-[#D1522E] hover:text-[#D1522E]/80" 
-            type="button"
-            onClick={async () => {
-              const email = prompt("Enter your email to reset your password");
-              if (email) {
-                try {
-                  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                    redirectTo: `${window.location.origin}/reset-password`,
-                  });
-                  if (error) throw error;
-                  toast({
-                    title: "Password reset email sent",
-                    description: "Check your email for a password reset link",
-                  });
-                } catch (error: any) {
-                  toast({
-                    title: "Error",
-                    description: error.message || "Failed to send password reset email",
-                    variant: "destructive",
-                  });
-                }
-              }
-            }}
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input placeholder="name@example.com" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input type="password" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button
+            type="submit"
+            className="w-full bg-[#D1522E] hover:bg-[#B8401F]"
+            disabled={isLoading}
           >
-            Forgot Password?
+            {isLoading ? "Signing in..." : "Sign In"}
           </Button>
+        </form>
+      </Form>
+      <div className="text-center">
+        <Link
+          to="/forgot-password"
+          className="text-sm text-[#D1522E] hover:underline"
+        >
+          Forgot Password?
+        </Link>
+      </div>
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t" />
         </div>
-        
-        <div className="pt-2">
-          <div className="relative flex items-center">
-            <div className="flex-grow border-t border-gray-200"></div>
-            <span className="mx-2 flex-shrink text-xs text-gray-500">
-              Demo accounts
-            </span>
-            <div className="flex-grow border-t border-gray-200"></div>
-          </div>
-          
-          <div className="mt-3 grid grid-cols-3 gap-2">
-            {demoAccounts.map(account => <Button key={account.role} type="button" variant="outline" size="sm" className="text-xs border-[#D1522E]/20 text-[#D1522E] hover:bg-[#D1522E]/10" onClick={() => loginAsDemoUser(account.email, account.password)} disabled={isSubmitting}>
-                {account.role}
-              </Button>)}
-          </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">
+            Demo Accounts
+          </span>
         </div>
-      </form>
-    </div>;
-};
+      </div>
+      <div className="flex justify-between gap-2">
+        <Button
+          variant="outline"
+          className="flex-1"
+          onClick={() => handleDemoLogin("admin")}
+        >
+          Admin
+        </Button>
+        <Button
+          variant="outline"
+          className="flex-1"
+          onClick={() => handleDemoLogin("builder")}
+        >
+          Builder
+        </Button>
+        <Button
+          variant="outline"
+          className="flex-1"
+          onClick={() => handleDemoLogin("homeowner")}
+        >
+          Homeowner
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default LoginForm;

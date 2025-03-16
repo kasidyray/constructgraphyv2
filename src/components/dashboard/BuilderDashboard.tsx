@@ -106,16 +106,18 @@ const BuilderDashboard: React.FC<BuilderDashboardProps> = ({
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome back, {user.name}!
+            Welcome back, {
+              user.first_name 
+                ? user.first_name.charAt(0).toUpperCase() + user.first_name.slice(1)
+                : user.name 
+                  ? user.name.split(' ')[0].charAt(0).toUpperCase() + user.name.split(' ')[0].slice(1)
+                  : 'Builder'
+            }!
           </p>
         </div>
         
         <div className="flex gap-2">
-          <Button onClick={() => setShowNewProjectDialog(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Project
-          </Button>
-          <Button asChild variant="outline">
+          <Button asChild>
             <Link to="/projects">
               View All Projects
             </Link>

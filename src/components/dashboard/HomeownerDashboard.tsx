@@ -15,6 +15,16 @@ const HomeownerDashboard: React.FC<HomeownerDashboardProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Debug user data
+  console.log("HomeownerDashboard user data:", {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    first_name: user.first_name,
+    last_name: user.last_name,
+    role: user.role
+  });
+
   const fetchProjects = async () => {
     try {
       setLoading(true);
@@ -33,12 +43,16 @@ const HomeownerDashboard: React.FC<HomeownerDashboardProps> = ({
     fetchProjects();
   }, [user.id]);
 
+  // Extract first name from email or use available name
+  const firstName = user.email.split('@')[0];
+  const displayName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+
   return (
     <div className="container mx-auto px-4 md:max-w-screen-xl py-8">
       <div className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight">My Projects</h1>
         <p className="text-muted-foreground">
-          Welcome back, {user.name}!
+          Welcome back, {displayName}!
         </p>
       </div>
 

@@ -1,5 +1,5 @@
 import { supabase, supabaseAdmin } from '@/lib/supabase';
-import { Project, ProjectImage } from '@/types';
+import { Project, ProjectImage, User } from '@/types';
 import { mockProjects } from '@/data/mockData';
 
 // Get all projects
@@ -119,8 +119,16 @@ export async function createProject(project: Omit<Project, 'id' | 'createdAt' | 
 }
 
 // Update an existing project
-export async function updateProject(id: string, updates: Partial<Project>): Promise<Project | null> {
+export async function updateProject(id: string, updates: Partial<Project>, currentUser?: User | null): Promise<Project | null> {
   try {
+    // Check if the updates include status or progress fields
+    const hasStatusOrProgressUpdates = updates.status !== undefined || updates.progress !== undefined;
+    
+    // If trying to update status or progress, verify the user is an admin
+    if (hasStatusOrProgressUpdates && (!currentUser || currentUser.role !== 'admin')) {
+      throw new Error('Only administrators can update project status or progress');
+    }
+    
     const { data, error } = await supabaseAdmin
       .from('projects')
       .update({

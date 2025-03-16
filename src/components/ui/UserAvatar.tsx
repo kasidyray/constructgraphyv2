@@ -20,19 +20,25 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   };
 
   const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .substring(0, 2);
+    const nameParts = name.split(" ").filter(part => part.length > 0);
+    
+    if (nameParts.length >= 2) {
+      // If there are at least two words, use first letter of first and second words
+      return (nameParts[0][0] + nameParts[1][0]).toUpperCase();
+    } else if (nameParts.length === 1) {
+      // If there's only one word, use first two letters of that word
+      return nameParts[0].substring(0, 2).toUpperCase();
+    }
+    
+    // Fallback for empty names
+    return "??";
   };
 
   if (!user) {
     return (
       <Avatar className={`${sizeClasses[size]} bg-muted`}>
         <AvatarFallback className="text-muted-foreground">
-          ?
+          ??
         </AvatarFallback>
       </Avatar>
     );

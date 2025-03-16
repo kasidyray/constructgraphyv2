@@ -13,7 +13,11 @@ import { getUsers } from "@/services/userService";
 import { getProjects } from "@/services/projectService";
 import { toast } from "sonner";
 
-const AdminDashboard: React.FC = () => {
+interface AdminDashboardProps {
+  user: User;
+}
+
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const [selectedHomeowner, setSelectedHomeowner] = useState<User | null>(null);
   const [selectedBuilder, setSelectedBuilder] = useState<User | null>(null);
   const [showNewUserDialog, setShowNewUserDialog] = useState(false);
@@ -113,7 +117,15 @@ const AdminDashboard: React.FC = () => {
       <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">Manage homeowners and projects</p>
+          <p className="text-muted-foreground">
+            Welcome back, {
+              user.first_name 
+                ? user.first_name.charAt(0).toUpperCase() + user.first_name.slice(1)
+                : user.name 
+                  ? user.name.split(' ')[0].charAt(0).toUpperCase() + user.name.split(' ')[0].slice(1)
+                  : 'Admin'
+            }!
+          </p>
         </div>
         
         <div className="flex gap-2">

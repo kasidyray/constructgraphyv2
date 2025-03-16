@@ -7,6 +7,8 @@ import ProjectStatusUpdate from "@/components/project/admin/ProjectStatusUpdate"
 import { toast } from "sonner";
 import { updateProject } from "@/services/projectService";
 import { uploadProjectImages, deleteProjectImage, updateProjectImage, getProjectImages } from "@/services/imageService";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Define the ImageCategory type directly here since it's not exported from imageService
 type ImageCategory = 'other' | 'interior' | 'exterior' | 'structural' | 'finishes' | 'general';
@@ -42,6 +44,8 @@ const AdminProjectView: React.FC<AdminProjectViewProps> = ({
   const [monthFilter, setMonthFilter] = useState<string>(currentMonth);
   const [isUpdating, setIsUpdating] = useState(false);
 
+  const { user } = useAuth();
+
   // Filter images based on selected year and month
   const filteredImages = useMemo(() => {
     return projectImages.filter(image => {
@@ -68,7 +72,7 @@ const AdminProjectView: React.FC<AdminProjectViewProps> = ({
     
     setIsUpdating(true);
     try {
-      const updatedProject = await updateProject(project.id, updatedProjectData);
+      const updatedProject = await updateProject(project.id, updatedProjectData, user);
       onProjectUpdate(updatedProject);
     } catch (error) {
       console.error("Error updating project:", error);

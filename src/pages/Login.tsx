@@ -1,19 +1,28 @@
 import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import LoginForm from "@/components/auth/LoginForm";
 
 const Login: React.FC = () => {
   const {
+    user,
+    loading,
     isAuthenticated
   } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Check if we just logged out
+  const searchParams = new URLSearchParams(location.search);
+  const justLoggedOut = searchParams.get('logout') === 'true';
 
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/dashboard");
+    // Only redirect if we're definitely authenticated, not loading, and not just logged out
+    if (!loading && isAuthenticated && user && !justLoggedOut) {
+      // Use window.location for a hard redirect instead of navigate
+      window.location.href = "/dashboard";
     }
-  }, [isAuthenticated, navigate]);
+  }, [loading, isAuthenticated, user, navigate, justLoggedOut]);
 
   return <div className="flex min-h-screen w-full">
       {/* Left side - Image and caption */}
@@ -44,6 +53,11 @@ const Login: React.FC = () => {
         <div className="mb-6 flex justify-center">
           <img src="/lovable-uploads/f03a9d6d-3e35-4b47-a5da-11e2eb0d92b1.png" alt="BuildTracker" className="h-8" />
         </div>
+        {justLoggedOut && (
+          <div className="mb-4 rounded-md bg-green-50 p-4 text-green-800">
+            <p className="text-center">You have been successfully logged out.</p>
+          </div>
+        )}
         <LoginForm />
       </div>
     </div>;

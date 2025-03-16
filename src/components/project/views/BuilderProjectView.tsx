@@ -7,6 +7,9 @@ import ProjectStatusUpdate from "@/components/project/admin/ProjectStatusUpdate"
 import { toast } from "sonner";
 import { updateProject } from "@/services/projectService";
 import { updateProjectImage } from "@/services/imageService";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import AdminOnlyMessage from "../admin/AdminOnlyMessage";
 
 interface BuilderProjectViewProps {
   project: Project;
@@ -39,15 +42,29 @@ const BuilderProjectView: React.FC<BuilderProjectViewProps> = ({
   const [yearFilter, setYearFilter] = useState<string>(currentYear);
   const [monthFilter, setMonthFilter] = useState<string>(currentMonth);
   const [isUpdating, setIsUpdating] = useState(false);
+  const { user } = useAuth();
+  const [showAdminOnlyMessage, setShowAdminOnlyMessage] = useState(false);
 
   // Handle project update
   const handleProjectUpdate = async (updatedProjectData: Partial<Project>) => {
     if (!project) return;
     
+    // Check if trying to update status or progress as a non-admin
+    const hasStatusOrProgressUpdates = 
+      updatedProjectData.status !== undefined || 
+      updatedProjectData.progress !== undefined;
+    
+    if (hasStatusOrProgressUpdates && user?.role !== 'admin') {
+      setShowAdminOnlyMessage(true);
+      toast.error("Only administrators can update project status or progress");
+      return;
+    }
+    
     setIsUpdating(true);
     try {
-      const updatedProject = await updateProject(project.id, updatedProjectData);
+      const updatedProject = await updateProject(project.id, updatedProjectData, user);
       onProjectUpdate(updatedProject);
+      setShowAdminOnlyMessage(false);
     } catch (error) {
       console.error("Error updating project:", error);
       toast.error("Failed to update project");
@@ -157,6 +174,10 @@ const BuilderProjectView: React.FC<BuilderProjectViewProps> = ({
           />
         </div>
       </div>
+
+      {showAdminOnlyMessage && (
+        <AdminOnlyMessage message="Only administrators can update project status or progress. Other project details can be updated by builders." />
+      )}
     </div>
   );
 };

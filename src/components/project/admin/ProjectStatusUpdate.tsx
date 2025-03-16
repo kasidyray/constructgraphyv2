@@ -51,18 +51,22 @@ const ProjectStatusUpdate: React.FC<ProjectStatusUpdateProps> = ({
     
     setIsUpdating(true);
     try {
-      const updatedProject = await updateProject(project.id, {
-        status: status as "planning" | "in-progress" | "completed" | "on-hold",
-        progress
-      });
+      const updatedProject = await updateProject(
+        project.id, 
+        {
+          status: status as "planning" | "in-progress" | "completed" | "on-hold",
+          progress
+        }, 
+        user
+      );
       
       if (updatedProject) {
         onProjectUpdate(updatedProject);
-        toast.success("Project updated successfully");
+        toast.success("Project status updated successfully");
       }
     } catch (error) {
-      console.error("Error updating project:", error);
-      toast.error("Failed to update project");
+      console.error("Error updating project status:", error);
+      toast.error("Failed to update project status");
     } finally {
       setIsUpdating(false);
     }
