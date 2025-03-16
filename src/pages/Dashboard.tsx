@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 import AdminDashboard from "@/components/dashboard/AdminDashboard";
@@ -7,9 +7,24 @@ import HomeownerDashboard from "@/components/dashboard/HomeownerDashboard";
 import { User as AuthUser } from "@/contexts/AuthContext";
 import { User } from "@/types";
 import AuthLayout from "@/components/layout/AuthLayout";
+import AdminDashboardSkeleton from "@/components/dashboard/AdminDashboardSkeleton";
+import BuilderDashboardSkeleton from "@/components/dashboard/BuilderDashboardSkeleton";
+import HomeownerDashboardSkeleton from "@/components/dashboard/HomeownerDashboardSkeleton";
 
 const Dashboard: React.FC = () => {
   const { user, loading, isAuthenticated } = useAuth();
+  const [dashboardLoading, setDashboardLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate dashboard data loading
+    if (user && isAuthenticated) {
+      const timer = setTimeout(() => {
+        setDashboardLoading(false);
+      }, 1000); // Show skeleton for at least 1 second
+      
+      return () => clearTimeout(timer);
+    }
+  }, [user, isAuthenticated]);
 
   // Show loading state while authentication is being determined
   if (loading) {
@@ -41,6 +56,17 @@ const Dashboard: React.FC = () => {
     role: user.role,
     createdAt: user.created_at
   };
+
+  // Show skeleton loading while dashboard data is loading
+  if (dashboardLoading) {
+    return (
+      <AuthLayout>
+        {user.role === "admin" && <AdminDashboardSkeleton />}
+        {user.role === "builder" && <BuilderDashboardSkeleton />}
+        {user.role === "homeowner" && <HomeownerDashboardSkeleton />}
+      </AuthLayout>
+    );
+  }
 
   // Render the appropriate dashboard based on user role
   return (
