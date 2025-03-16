@@ -11,19 +11,14 @@ const Login: React.FC = () => {
     isAuthenticated
   } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   
-  // Check if we just logged out
-  const searchParams = new URLSearchParams(location.search);
-  const justLoggedOut = searchParams.get('logout') === 'true';
-
   useEffect(() => {
-    // Only redirect if we're definitely authenticated, not loading, and not just logged out
-    if (!loading && isAuthenticated && user && !justLoggedOut) {
+    // Only redirect if we're definitely authenticated and not loading
+    if (!loading && isAuthenticated && user) {
       // Use window.location for a hard redirect instead of navigate
       window.location.href = "/dashboard";
     }
-  }, [loading, isAuthenticated, user, navigate, justLoggedOut]);
+  }, [loading, isAuthenticated, user, navigate]);
 
   return <div className="flex min-h-screen w-full">
       {/* Left side - Image and caption */}
@@ -62,11 +57,6 @@ const Login: React.FC = () => {
             className="h-8" 
           />
         </div>
-        {justLoggedOut && (
-          <div className="mb-4 rounded-md bg-green-50 p-4 text-green-800">
-            <p className="text-center">You have been successfully logged out.</p>
-          </div>
-        )}
         <LoginForm />
       </div>
     </div>;
