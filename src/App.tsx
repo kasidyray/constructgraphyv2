@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Projects from "./pages/Projects";
 import ProjectDetails from "./pages/ProjectDetails";
 import NotFound from "./pages/NotFound";
+import EmailTestPage from "./pages/admin/email-test";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
               <Route path="/projects/:id" element={<ProjectDetails />} />
               <Route path="/homeowner/:homeownerId/projects" element={<Projects />} />
               <Route path="/builder/:builderId/projects" element={<Projects />} />
+              <Route path="/admin/email-test" element={<EmailTestPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
