@@ -5,6 +5,7 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
+import { Loader2 } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -29,6 +30,7 @@ function LoginForm() {
   const { login } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -73,7 +75,7 @@ function LoginForm() {
     }
   }
 
-  function handleDemoLogin(role: string) {
+  async function handleDemoLogin(role: string) {
     let email = "";
     const password = "password123";
 
@@ -93,6 +95,40 @@ function LoginForm() {
 
     form.setValue("email", email);
     form.setValue("password", password);
+    
+    // Auto-submit the form with the demo credentials
+    setDemoLoading(role);
+    
+    try {
+      const result = await login(email, password);
+      
+      if (result.error) {
+        toast({
+          variant: "destructive",
+          title: "Login Failed",
+          description: result.error,
+        });
+        setDemoLoading(null);
+      } else {
+        toast({
+          title: "Login Successful",
+          description: `Logged in as ${role}. Redirecting to dashboard...`,
+        });
+        
+        // Use a short timeout to ensure the toast is shown before redirect
+        setTimeout(() => {
+          // Use direct navigation to ensure page reload and state reset
+          window.location.href = "/dashboard";
+        }, 500);
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: "An unexpected error occurred. Please try again.",
+      });
+      setDemoLoading(null);
+    }
   }
 
   return (
@@ -136,7 +172,14 @@ function LoginForm() {
             className="w-full bg-[#D1522E] hover:bg-[#B8401F]"
             disabled={isLoading}
           >
-            {isLoading ? "Signing in..." : "Sign In"}
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Signing in...
+              </>
+            ) : (
+              "Sign In"
+            )}
           </Button>
         </form>
       </Form>
@@ -163,22 +206,46 @@ function LoginForm() {
           variant="outline"
           className="flex-1"
           onClick={() => handleDemoLogin("admin")}
+          disabled={isLoading || demoLoading !== null}
         >
-          Admin
+          {demoLoading === "admin" ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Admin
+            </>
+          ) : (
+            "Admin"
+          )}
         </Button>
         <Button
           variant="outline"
           className="flex-1"
           onClick={() => handleDemoLogin("builder")}
+          disabled={isLoading || demoLoading !== null}
         >
-          Builder
+          {demoLoading === "builder" ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Builder
+            </>
+          ) : (
+            "Builder"
+          )}
         </Button>
         <Button
           variant="outline"
           className="flex-1"
           onClick={() => handleDemoLogin("homeowner")}
+          disabled={isLoading || demoLoading !== null}
         >
-          Homeowner
+          {demoLoading === "homeowner" ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Homeowner
+            </>
+          ) : (
+            "Homeowner"
+          )}
         </Button>
       </div>
     </div>
