@@ -79,34 +79,86 @@ export async function getUserByEmail(email: string): Promise<User | null> {
 // Create a new user
 export async function createUser(user: Omit<User, 'id' | 'createdAt'>): Promise<User | null> {
   try {
-    // Generate UUID client-side - more reliable than RPC calls
-    const uuid = uuidv4();
-    
-    // Create a new profile with a unique ID
-    const newProfile = {
-      id: uuid,
+    // Step 1: Create a user in auth.users using Supabase Auth API
+    const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: user.email.toLowerCase(),
-      name: user.name,
-      role: user.role,
-      phone: user.phone,
-      createdAt: new Date().toISOString(),
-      ...(user.builderId && { builderId: user.builderId })
-    };
+      password: 'Temp123!', // Temporary password that will be changed on first login
+      email_confirm: true, // Auto-confirm email to simplify the process
+      user_metadata: {
+        name: user.name,
+        role: user.role
+      }
+    });
     
-    const { data: profileData, error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .insert(newProfile)
-      .select()
-      .single();
-    
-    if (profileError) {
-      console.error('Error creating profile in Supabase:', profileError);
-      throw new Error(`Failed to create profile: ${profileError.message}`);
+    if (authError) {
+      console.error('Error creating auth user:', authError);
+      throw new Error(`Failed to create auth user: ${authError.message}`);
     }
     
-    return profileData;
+    const userId = authUser.user.id;
+    
+    // Step 2: Wait a moment for the trigger to create the profile
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Step 3: Check if profile exists (it should be created by the trigger)
+    const { data: existingProfile, error: fetchError } = await supabaseAdmin
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+      
+    if (fetchError && !fetchError.message.includes('No rows found')) {
+      console.error('Error fetching profile:', fetchError);
+      throw new Error(`Failed to fetch profile: ${fetchError.message}`);
+    }
+    
+    if (existingProfile) {
+      // Profile exists, update it with additional information
+      const { data: updatedProfile, error: updateError } = await supabaseAdmin
+        .from('profiles')
+        .update({
+          name: user.name,
+          role: user.role,
+          phone: user.phone,
+          ...(user.builderId && { builderId: user.builderId })
+        })
+        .eq('id', userId)
+        .select()
+        .single();
+        
+      if (updateError) {
+        console.error('Error updating profile:', updateError);
+        throw new Error(`Failed to update profile: ${updateError.message}`);
+      }
+      
+      return updatedProfile;
+    } else {
+      // Profile doesn't exist (unlikely, but handle it anyway)
+      const newProfile = {
+        id: userId,
+        email: user.email.toLowerCase(),
+        name: user.name,
+        role: user.role,
+        phone: user.phone,
+        createdAt: new Date().toISOString(),
+        ...(user.builderId && { builderId: user.builderId })
+      };
+      
+      const { data: profileData, error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .insert(newProfile)
+        .select()
+        .single();
+      
+      if (profileError) {
+        console.error('Error creating profile:', profileError);
+        throw new Error(`Failed to create profile: ${profileError.message}`);
+      }
+      
+      return profileData;
+    }
   } catch (error) {
-    console.error('Error connecting to Supabase:', error);
+    console.error('Error in createUser:', error);
     throw error;
   }
 }

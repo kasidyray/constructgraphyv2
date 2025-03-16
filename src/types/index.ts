@@ -13,6 +13,8 @@ export interface User {
   builderName?: string;
   first_name?: string;
   last_name?: string;
+  email_confirmed_at?: Date | string;
+  last_sign_in_at?: Date | string;
 }
 
 export interface Project {
