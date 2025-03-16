@@ -2,6 +2,8 @@ import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { User } from '@/types';
 import { mockUsers } from '@/data/mockData';
 import { v4 as uuidv4 } from 'uuid';
+import { sendWelcomeEmail } from './emailService';
+import logger from '@/utils/logger';
 
 // Get all users
 export async function getUsers(): Promise<User[]> {
@@ -112,6 +114,8 @@ export async function createUser(user: Omit<User, 'id' | 'createdAt'>): Promise<
       throw new Error(`Failed to fetch profile: ${fetchError.message}`);
     }
     
+    let profileData;
+    
     if (existingProfile) {
       // Profile exists, update it with additional information
       const { data: updatedProfile, error: updateError } = await supabaseAdmin
@@ -131,7 +135,7 @@ export async function createUser(user: Omit<User, 'id' | 'createdAt'>): Promise<
         throw new Error(`Failed to update profile: ${updateError.message}`);
       }
       
-      return updatedProfile;
+      profileData = updatedProfile;
     } else {
       // Profile doesn't exist (unlikely, but handle it anyway)
       const newProfile = {
@@ -144,7 +148,7 @@ export async function createUser(user: Omit<User, 'id' | 'createdAt'>): Promise<
         ...(user.builderId && { builderId: user.builderId })
       };
       
-      const { data: profileData, error: profileError } = await supabaseAdmin
+      const { data: createdProfile, error: profileError } = await supabaseAdmin
         .from('profiles')
         .insert(newProfile)
         .select()
@@ -155,8 +159,25 @@ export async function createUser(user: Omit<User, 'id' | 'createdAt'>): Promise<
         throw new Error(`Failed to create profile: ${profileError.message}`);
       }
       
-      return profileData;
+      profileData = createdProfile;
     }
+    
+    // Step 4: Send welcome email
+    try {
+      logger.info(`Sending welcome email to new user: ${user.email}`);
+      await sendWelcomeEmail({
+        id: userId,
+        email: user.email.toLowerCase(),
+        name: user.name,
+        role: user.role,
+        createdAt: new Date().toISOString()
+      });
+    } catch (emailError) {
+      // Don't fail the user creation if email sending fails
+      logger.error(`Failed to send welcome email to ${user.email}:`, emailError);
+    }
+    
+    return profileData;
   } catch (error) {
     console.error('Error in createUser:', error);
     throw error;

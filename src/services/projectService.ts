@@ -1,6 +1,9 @@
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { Project, ProjectImage, User } from '@/types';
 import { mockProjects } from '@/data/mockData';
+import { getUserById } from './userService';
+import { sendProjectPhotosNotification } from './emailService';
+import logger from '@/utils/logger';
 
 // Get all projects
 export async function getProjects(): Promise<Project[]> {
@@ -194,6 +197,88 @@ export async function updateProjectThumbnail(projectId: string, thumbnailUrl: st
     return data;
   } catch (error) {
     console.error('Error connecting to Supabase:', error);
+    throw error;
+  }
+}
+
+// Upload project images and notify homeowner
+export async function uploadProjectImages(
+  projectId: string, 
+  images: { url: string; caption: string; category: string }[],
+  currentUser: User
+): Promise<ProjectImage[]> {
+  try {
+    logger.info(`Uploading ${images.length} images for project ${projectId}`);
+    
+    // Prepare image data for insertion
+    const imageData = images.map(image => ({
+      projectId,
+      url: image.url,
+      caption: image.caption,
+      category: image.category,
+      createdAt: new Date().toISOString()
+    }));
+    
+    // Insert images into the database
+    const { data: uploadedImages, error } = await supabaseAdmin
+      .from('project_images')
+      .insert(imageData)
+      .select();
+    
+    if (error) {
+      logger.error(`Error uploading project images:`, error);
+      throw new Error(`Failed to upload project images: ${error.message}`);
+    }
+    
+    // Get the project details
+    const { data: project, error: projectError } = await supabaseAdmin
+      .from('projects')
+      .select('*')
+      .eq('id', projectId)
+      .single();
+    
+    if (projectError) {
+      logger.error(`Error fetching project details:`, projectError);
+      throw new Error(`Failed to fetch project details: ${projectError.message}`);
+    }
+    
+    // Update the project's thumbnail if it doesn't have one
+    if (!project.thumbnail && uploadedImages.length > 0) {
+      await updateProjectThumbnail(projectId, uploadedImages[0].url);
+    }
+    
+    // Update the project's updatedAt timestamp
+    await supabaseAdmin
+      .from('projects')
+      .update({ updatedAt: new Date().toISOString() })
+      .eq('id', projectId);
+    
+    // Send notification to homeowner if the current user is an admin
+    if (currentUser.role === 'admin' && project.homeownerId) {
+      try {
+        // Get the homeowner details
+        const homeowner = await getUserById(project.homeownerId);
+        
+        if (homeowner) {
+          logger.info(`Sending notification to homeowner ${homeowner.email} about new photos`);
+          
+          // Send notification email
+          await sendProjectPhotosNotification(
+            homeowner,
+            project,
+            uploadedImages,
+            currentUser.name
+          );
+        }
+      } catch (notificationError) {
+        // Don't fail the upload if notification fails
+        logger.error(`Failed to send notification to homeowner:`, notificationError);
+      }
+    }
+    
+    return uploadedImages;
+  } catch (error) {
+    logger.error(`Error in uploadProjectImages:`, error);
     throw error;
   }
 } 

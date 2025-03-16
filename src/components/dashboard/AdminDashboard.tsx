@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, UserPlus, Loader2 } from "lucide-react";
+import { Plus, UserPlus, Loader2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { User, Project } from "@/types";
 import StatCards from "@/components/dashboard/StatCards";
@@ -75,7 +75,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       setBuilders(prev => [newUser, ...prev]);
     }
     
-    toast.success(`${newUser.role === "homeowner" ? "Homeowner" : "Builder"} created successfully`);
+    toast.success(`${newUser.role.charAt(0).toUpperCase() + newUser.role.slice(1)} created successfully`);
     
     // Refresh all data to ensure consistency
     fetchData();
@@ -114,65 +114,74 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
 
   return (
     <div className="container mx-auto px-4 md:max-w-screen-xl py-8">
-      <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Welcome back, {
-              user.first_name 
-                ? user.first_name.charAt(0).toUpperCase() + user.first_name.slice(1)
-                : user.name 
-                  ? user.name.split(' ')[0].charAt(0).toUpperCase() + user.name.split(' ')[0].slice(1)
-                  : 'Admin'
-            }!
-          </p>
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">
+              Welcome back, {
+                user.first_name 
+                  ? user.first_name.charAt(0).toUpperCase() + user.first_name.slice(1)
+                  : user.name 
+                    ? user.name.split(' ')[0].charAt(0).toUpperCase() + user.name.split(' ')[0].slice(1)
+                    : 'Admin'
+              }
+            </h2>
+            <p className="text-muted-foreground">
+              Here's what's happening with your construction projects today.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => setShowNewUserDialog(true)}>
+              <UserPlus className="mr-2 h-4 w-4" />
+              New User
+            </Button>
+            <Button onClick={() => setShowNewProjectDialog(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              New Project
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/admin/email-test">
+                <Mail className="mr-2 h-4 w-4" />
+                Email Test
+              </Link>
+            </Button>
+          </div>
         </div>
         
-        <div className="flex gap-2">
-          <Button onClick={() => setShowNewProjectDialog(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Project
-          </Button>
-          <Button onClick={() => setShowNewUserDialog(true)}>
-            <UserPlus className="mr-2 h-4 w-4" />
-            New User
-          </Button>
-        </div>
+        <StatCards projects={projects} />
+        
+        <Tabs defaultValue="homeowners" className="mt-6">
+          <TabsList>
+            <TabsTrigger value="homeowners">Homeowners</TabsTrigger>
+            <TabsTrigger value="builders">Builders</TabsTrigger>
+          </TabsList>
+          <TabsContent value="homeowners" className="mt-6">
+            <HomeownerTable 
+              homeowners={homeowners} 
+              onHomeownerSelect={handleHomeownerSelect} 
+            />
+          </TabsContent>
+          <TabsContent value="builders" className="mt-6">
+            <BuilderTable 
+              builders={builders} 
+              onBuilderSelect={handleBuilderSelect} 
+            />
+          </TabsContent>
+        </Tabs>
+        
+        {/* Dialogs */}
+        <NewUserDialog 
+          open={showNewUserDialog} 
+          onOpenChange={setShowNewUserDialog}
+          onUserCreated={handleUserCreated}
+        />
+        
+        <NewProjectDialog 
+          open={showNewProjectDialog} 
+          onOpenChange={setShowNewProjectDialog}
+          onProjectCreated={handleProjectCreated}
+        />
       </div>
-      
-      <StatCards projects={projects} />
-      
-      <Tabs defaultValue="homeowners" className="mt-6">
-        <TabsList>
-          <TabsTrigger value="homeowners">Homeowners</TabsTrigger>
-          <TabsTrigger value="builders">Builders</TabsTrigger>
-        </TabsList>
-        <TabsContent value="homeowners" className="mt-6">
-          <HomeownerTable 
-            homeowners={homeowners} 
-            onHomeownerSelect={handleHomeownerSelect} 
-          />
-        </TabsContent>
-        <TabsContent value="builders" className="mt-6">
-          <BuilderTable 
-            builders={builders} 
-            onBuilderSelect={handleBuilderSelect} 
-          />
-        </TabsContent>
-      </Tabs>
-      
-      {/* Dialogs */}
-      <NewUserDialog 
-        open={showNewUserDialog} 
-        onOpenChange={setShowNewUserDialog}
-        onUserCreated={handleUserCreated}
-      />
-      
-      <NewProjectDialog 
-        open={showNewProjectDialog} 
-        onOpenChange={setShowNewProjectDialog}
-        onProjectCreated={handleProjectCreated}
-      />
     </div>
   );
 };
