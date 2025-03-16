@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Project, ProjectImage } from "@/types";
 import ProjectHeader from "@/components/project/ProjectHeader";
 import ProjectPhotoFilters from "@/components/project/shared/ProjectPhotoFilters";
-import PhotoGallery from "@/components/project/shared/PhotoGallery";
+import ImageGallery from "@/components/ui/ImageGallery";
 import { toast } from "sonner";
 import { Heart, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { getUserProjectFavorites, addToFavorites, removeFromFavorites } from "@/services/favoriteService";
 import { supabase } from "@/lib/supabase";
+import { Badge } from "@/components/ui/badge";
 
 interface HomeownerProjectViewProps {
   project: Project;
@@ -90,10 +91,7 @@ const HomeownerProjectView: React.FC<HomeownerProjectViewProps> = ({
         if (success) {
           toast.success(image?.caption 
             ? `"${image.caption}" removed from favorites` 
-            : "Image removed from favorites",
-            {
-              icon: <Heart className="h-5 w-5" />
-            }
+            : "Image removed from favorites"
           );
         }
       } else {
@@ -101,10 +99,7 @@ const HomeownerProjectView: React.FC<HomeownerProjectViewProps> = ({
         if (success) {
           toast.success(image?.caption 
             ? `"${image.caption}" added to favorites` 
-            : "Image added to favorites",
-            {
-              icon: <Heart className="h-5 w-5 fill-red-500 text-red-500" />
-            }
+            : "Image added to favorites"
           );
         }
       }
@@ -182,17 +177,16 @@ const HomeownerProjectView: React.FC<HomeownerProjectViewProps> = ({
                 variant={showOnlyFavorites ? "default" : "outline"}
                 size="sm" 
                 onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
-                className={cn(
-                  "flex items-center gap-1 rounded-full whitespace-nowrap",
-                  showOnlyFavorites && "bg-red-500 hover:bg-red-600 text-white"
-                )}
+                className="flex items-center gap-1 rounded-full whitespace-nowrap"
                 disabled={isLoadingFavorites}
               >
-                <Heart className={cn(
-                  "h-4 w-4", 
-                  showOnlyFavorites && "fill-white"
-                )} />
-                Favorites {favorites.size > 0 && `(${favorites.size})`}
+                <Heart className={cn("h-4 w-4", showOnlyFavorites && "fill-current")} />
+                Favorites
+                {favorites.size > 0 && (
+                  <Badge variant="secondary" className="ml-1 px-1.5 py-0 h-5 min-w-5 flex items-center justify-center">
+                    {favorites.size}
+                  </Badge>
+                )}
               </Button>
               
               <div className="h-6 w-px bg-border mx-1" />
@@ -209,10 +203,11 @@ const HomeownerProjectView: React.FC<HomeownerProjectViewProps> = ({
         
         {filteredImages.length > 0 ? (
           <div className="relative">
-            <PhotoGallery 
+            <ImageGallery 
               images={filteredImages} 
-              onToggleFavorite={toggleFavorite}
+              editable={false}
               favorites={favorites}
+              onUpdate={(imageId) => handleImageAction(imageId)}
             />
           </div>
         ) : (

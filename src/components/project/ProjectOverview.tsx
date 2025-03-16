@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/dialog";
 import PhotoUploader from "./admin/PhotoUploader";
 import LazyImage from "@/components/ui/LazyImage";
+import { getUserProjectFavorites, addToFavorites, removeFromFavorites } from "@/services/favoriteService";
+import { Badge } from "@/components/ui/badge";
 
 interface ProjectOverviewProps {
   project: Project;
@@ -62,6 +64,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [previewImage, setPreviewImage] = useState<ProjectImage | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [isLoadingFavorites, setIsLoadingFavorites] = useState(false);
 
   // Generate years array (current year and 2 years ahead)
   const availableYears = useMemo(() => {
@@ -96,12 +99,26 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       : MONTHS;
   }, [projectImages, selectedYear, isHomeowner]);
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+  const formatDate = (date: string | Date) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    const currentYear = new Date().getFullYear();
+    const imageYear = dateObj.getFullYear();
+    
+    // If current year, show as Month Day
+    if (imageYear === currentYear) {
+      return dateObj.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+    } 
+    // If past years, show as Month Day Year
+    else {
+      return dateObj.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    }
   };
 
   // Extract unique years and months from project images
@@ -178,28 +195,115 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       .slice(0, 3);
   }, [filteredImages]);
 
-  const toggleFavorite = (imageId: string) => {
+  // Load favorites from database on component mount
+  useEffect(() => {
+    const loadFavorites = async () => {
+      if (user && project && isHomeowner) {
+        setIsLoadingFavorites(true);
+        try {
+          // Use the user ID from context directly
+          console.log("Loading favorites for user:", user.id);
+          
+          const favoriteIds = await getUserProjectFavorites(user.id, project.id);
+          setFavorites(new Set(favoriteIds));
+        } catch (error) {
+          console.error("Error loading favorites:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load favorites",
+            variant: "destructive",
+          });
+        } finally {
+          setIsLoadingFavorites(false);
+        }
+      }
+    };
+
+    loadFavorites();
+  }, [user, project, isHomeowner]);
+
+  const toggleFavorite = async (imageId: string) => {
+    if (!user || !isHomeowner) {
+      toast({
+        title: "Error",
+        description: "You must be logged in as a homeowner to favorite images",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const image = projectImages.find(img => img.id === imageId);
+    const isFavorited = favorites.has(imageId);
+    
+    // Optimistically update UI
     setFavorites(prev => {
       const newFavorites = new Set(prev);
-      const image = projectImages.find(img => img.id === imageId);
-      
-      if (newFavorites.has(imageId)) {
+      if (isFavorited) {
         newFavorites.delete(imageId);
-        toast({
-          title: "Removed from favorites",
-          description: image?.caption ? `"${image.caption}" removed from favorites` : "Image removed from favorites",
-          duration: 3000,
-        });
       } else {
         newFavorites.add(imageId);
-        toast({
-          title: "Added to favorites",
-          description: image?.caption ? `"${image.caption}" added to favorites` : "Image added to favorites",
-          duration: 3000,
-        });
       }
       return newFavorites;
     });
+
+    try {
+      let success;
+      if (isFavorited) {
+        success = await removeFromFavorites(user.id, imageId);
+        if (success) {
+          toast({
+            title: "Removed from favorites",
+            description: image?.caption ? `"${image.caption}" removed from favorites` : "Image removed from favorites",
+            duration: 3000,
+          });
+        }
+      } else {
+        success = await addToFavorites(user.id, imageId, project.id);
+        if (success) {
+          toast({
+            title: "Added to favorites",
+            description: image?.caption ? `"${image.caption}" added to favorites` : "Image added to favorites",
+            duration: 3000,
+          });
+        }
+      }
+
+      if (!success) {
+        // Revert UI change if operation failed
+        setFavorites(prev => {
+          const newFavorites = new Set(prev);
+          if (isFavorited) {
+            newFavorites.add(imageId);
+          } else {
+            newFavorites.delete(imageId);
+          }
+          return newFavorites;
+        });
+        toast({
+          title: "Error",
+          description: "Failed to update favorites",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating favorites:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update favorites",
+        variant: "destructive",
+      });
+      
+      // Revert UI change on error
+      setFavorites(prev => {
+        const newFavorites = new Set(prev);
+        if (isFavorited) {
+          newFavorites.add(imageId);
+        } else {
+          newFavorites.delete(imageId);
+        }
+        return newFavorites;
+      });
+    }
   };
 
   // Find next and previous images for the preview navigation
@@ -232,8 +336,13 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
                   onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
                   className="flex items-center gap-1 rounded-full"
                 >
-                  <Star className="h-4 w-4" />
+                  <Heart className={cn("h-4 w-4", showOnlyFavorites && "fill-current")} />
                   Favorites
+                  {favorites.size > 0 && (
+                    <Badge variant="secondary" className="ml-1 px-1.5 py-0 h-5 min-w-5 flex items-center justify-center">
+                      {favorites.size}
+                    </Badge>
+                  )}
                 </Button>
                 
                 {/* Year select */}

@@ -6,28 +6,29 @@ import { Calendar, ChevronLeft, ChevronRight, X, Trash, Heart, Download } from "
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
-import PhotoGallery from "@/components/project/shared/PhotoGallery";
 
 interface ImageGalleryProps {
   images: ProjectImage[];
   className?: string;
   editable?: boolean;
+  favorites?: Set<string>;
   onDelete?: (imageId: string) => void;
-  onUpdate?: (imageId: string, updates: Partial<ProjectImage>) => void;
+  onUpdate?: (imageId: string, updates?: Partial<ProjectImage>) => void;
 }
 
 const ImageGallery: React.FC<ImageGalleryProps> = ({ 
   images, 
   className = "",
   editable = false,
+  favorites = new Set(),
   onDelete,
   onUpdate
 }) => {
   const { user } = useAuth();
+  const isBuilder = user?.role === "builder";
   const isHomeowner = user?.role === "homeowner";
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [imageLoadErrors, setImageLoadErrors] = useState<Record<string, boolean>>({});
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [isTransitioning, setIsTransitioning] = useState(false);
   
   // Log images when they change
@@ -112,10 +113,9 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     }));
   };
 
-  const handleToggleFavorite = (imageId: string) => {
+  const toggleFavorite = (imageId: string) => {
     if (onUpdate && isHomeowner) {
-      // Call the onUpdate function which will be handled by the parent component
-      onUpdate(imageId, {});
+      onUpdate(imageId);
     }
   };
 
@@ -150,12 +150,54 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
 
   return (
     <div className={className}>
-      <PhotoGallery 
-        images={images}
-        onToggleFavorite={isHomeowner ? handleToggleFavorite : undefined}
-        favorites={favorites}
-        columns={4}
-      />
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+        {images.map((image, index) => (
+          <div 
+            key={image.id} 
+            className="group relative aspect-square cursor-pointer overflow-hidden rounded-md border bg-muted"
+            onClick={() => openLightbox(index)}
+          >
+            <img
+              src={imageLoadErrors[image.id] ? placeholderImage : image.url}
+              alt={image.caption || "Project image"}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              loading="lazy"
+              onError={() => handleImageError(image.id)}
+            />
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+              <div className="space-y-1">
+                <p className="text-sm text-white font-medium">{formatDate(image.createdAt)}</p>
+              </div>
+            </div>
+            
+            {editable && onDelete && !isBuilder && (
+              <button
+                className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => handleDelete(e, image.id)}
+              >
+                <Trash size={16} />
+              </button>
+            )}
+            
+            {isHomeowner && (
+              <button
+                className="absolute top-2 right-2 p-1 bg-white/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFavorite(image.id);
+                }}
+              >
+                <Heart 
+                  className={cn(
+                    "h-4 w-4", 
+                    favorites.has(image.id) ? "fill-red-500 text-red-500" : "text-gray-700"
+                  )} 
+                />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
 
       {selectedImageIndex !== null && (
         <Dialog open={selectedImageIndex !== null} onOpenChange={closeLightbox}>
@@ -174,22 +216,24 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="rounded-full hover:bg-white/10 text-white"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleToggleFavorite(images[selectedImageIndex].id);
-                    }}
-                  >
-                    <Heart 
-                      className={cn(
-                        "h-5 w-5 transition-colors", 
-                        favorites.has(images[selectedImageIndex].id) ? "fill-red-500 text-red-500" : "text-white"
-                      )} 
-                    />
-                  </Button>
+                  {isHomeowner && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-full hover:bg-white/10 text-white"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavorite(images[selectedImageIndex].id);
+                      }}
+                    >
+                      <Heart 
+                        className={cn(
+                          "h-5 w-5 transition-colors", 
+                          favorites.has(images[selectedImageIndex].id) ? "fill-red-500 text-red-500" : "text-white"
+                        )} 
+                      />
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -268,11 +312,11 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
                     </div>
                   </div>
                   
-                  {editable && onDelete && (
+                  {editable && onDelete && !isBuilder && (
                     <Button 
                       variant="destructive" 
                       size="sm"
-                      onClick={(e) => {
+                      onClick={() => {
                         if (onDelete && window.confirm("Are you sure you want to delete this image?")) {
                           onDelete(images[selectedImageIndex].id);
                           closeLightbox();

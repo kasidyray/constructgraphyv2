@@ -50,12 +50,13 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
 
   return (
     <Link to={`/projects/${project.id}`} className="block h-full">
-      <Card className={`overflow-hidden transition-all duration-300 hover:shadow-md h-full ${className}`}>
+      <Card className={`overflow-hidden transition-all duration-300 hover:shadow-md h-full flex flex-col ${className}`}>
         <div className="relative h-48 w-full overflow-hidden">
           {project.thumbnail && (
             <LazyImage
               src={project.thumbnail}
               alt={project.title}
+              loading="lazy"
               className="h-full w-full object-cover transition-transform duration-500 ease-in-out hover:scale-105"
             />
           )}
@@ -68,7 +69,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           </div>
         </div>
 
-        <CardContent className="space-y-3 p-4">
+        <CardContent className="space-y-3 p-4 flex-grow flex flex-col">
           <div>
             <h3 className="line-clamp-1 text-xl font-semibold">{project.title}</h3>
             <p className="line-clamp-2 text-sm text-muted-foreground">{formattedDescription}</p>
@@ -79,7 +80,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             <span className="line-clamp-1">{project.address}</span>
           </div>
           
-          <div className="space-y-1">
+          <div className="space-y-1 mt-auto">
             <div className="flex items-center justify-between text-sm">
               <span>Progress</span>
               <span className="font-medium">{project.progress}%</span>
@@ -88,7 +89,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           </div>
         </CardContent>
 
-        <CardFooter className="border-t bg-secondary/50 px-4 py-3">
+        <CardFooter className="border-t bg-secondary/50 px-4 py-3 mt-auto">
           <div className="flex w-full items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
               <Calendar size={14} />

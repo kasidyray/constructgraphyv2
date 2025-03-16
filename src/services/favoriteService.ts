@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { mockUserFavorites } from '@/data/mockData';
 
 interface FavoriteImage {
@@ -14,7 +14,8 @@ export async function getUserFavorites(userId: string): Promise<string[]> {
   try {
     console.log('Fetching favorites for user:', userId);
     
-    const { data, error } = await supabase
+    // Use admin client to bypass RLS
+    const { data, error } = await supabaseAdmin
       .from('user_favourites')
       .select('imageId')
       .eq('userId', userId);
@@ -45,7 +46,8 @@ export async function getUserProjectFavorites(userId: string, projectId: string)
   try {
     console.log('Fetching favorites for user:', userId, 'in project:', projectId);
     
-    const { data, error } = await supabase
+    // Use admin client to bypass RLS
+    const { data, error } = await supabaseAdmin
       .from('user_favourites')
       .select('imageId')
       .eq('userId', userId)
@@ -138,28 +140,6 @@ export async function removeFromFavorites(userId: string, imageId: string): Prom
     return true;
   } catch (err) {
     console.error('Unexpected error in removeFromFavorites:', err);
-    return false;
-  }
-}
-
-// Check if an image is favorited by a user
-export async function isImageFavorited(userId: string, imageId: string): Promise<boolean> {
-  try {
-    const { data, error } = await supabase
-      .from('user_favourites')
-      .select('id')
-      .eq('userId', userId)
-      .eq('imageId', imageId)
-      .maybeSingle();
-    
-    if (error) {
-      console.error('Error checking if image is favorited:', error);
-      return false;
-    }
-    
-    return !!data;
-  } catch (err) {
-    console.error('Unexpected error in isImageFavorited:', err);
     return false;
   }
 } 
