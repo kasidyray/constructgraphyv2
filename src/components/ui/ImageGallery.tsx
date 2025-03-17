@@ -165,8 +165,35 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
               onError={() => handleImageError(image.id)}
             />
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-              <div className="space-y-1">
+              <div className="flex justify-between items-center">
                 <p className="text-sm text-white font-medium">{formatDate(image.createdAt)}</p>
+                {isHomeowner && (
+                  <div className="flex gap-2">
+                    <button
+                      className="p-1 bg-white/80 rounded-full flex items-center justify-center"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavorite(image.id);
+                      }}
+                    >
+                      <Heart 
+                        className={cn(
+                          "h-4 w-4", 
+                          favorites.has(image.id) ? "fill-red-500 text-red-500" : "text-gray-700"
+                        )} 
+                      />
+                    </button>
+                    <button
+                      className="p-1 bg-white/80 rounded-full flex items-center justify-center"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        downloadImage(image.url, image.caption || "project-image");
+                      }}
+                    >
+                      <Download className="h-4 w-4 text-gray-700" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
             
@@ -176,23 +203,6 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
                 onClick={(e) => handleDelete(e, image.id)}
               >
                 <Trash size={16} />
-              </button>
-            )}
-            
-            {isHomeowner && (
-              <button
-                className="absolute top-2 right-2 p-1 bg-white/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleFavorite(image.id);
-                }}
-              >
-                <Heart 
-                  className={cn(
-                    "h-4 w-4", 
-                    favorites.has(image.id) ? "fill-red-500 text-red-500" : "text-gray-700"
-                  )} 
-                />
               </button>
             )}
           </div>
