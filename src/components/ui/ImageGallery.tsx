@@ -120,12 +120,47 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   };
 
   const downloadImage = (url: string, caption: string) => {
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = caption || 'project-image';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      console.log('Downloading image from URL:', url);
+      
+      // For cross-origin images, we need to fetch them first
+      fetch(url)
+        .then(response => response.blob())
+        .then(blob => {
+          // Create a blob URL for the image
+          const blobUrl = URL.createObjectURL(blob);
+          
+          // Create a link element
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = caption || 'project-image';
+          
+          // Append to body, click, and clean up
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          // Release the blob URL
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+          
+          console.log('Image download initiated successfully');
+        })
+        .catch(error => {
+          console.error('Error downloading image:', error);
+          // Fallback to the original method if fetch fails
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = caption || 'project-image';
+          link.target = '_blank';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        });
+    } catch (error) {
+      console.error('Error in downloadImage function:', error);
+      // Open the image in a new tab as a last resort
+      window.open(url, '_blank');
+    }
   };
 
   const categoryColors = {
