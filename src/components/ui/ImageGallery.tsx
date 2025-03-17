@@ -164,13 +164,13 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
               loading="lazy"
               onError={() => handleImageError(image.id)}
             />
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
               <div className="flex justify-between items-center">
                 <p className="text-sm text-white font-medium">{formatDate(image.createdAt)}</p>
                 {isHomeowner && (
-                  <div className="flex gap-2">
+                  <div className="flex items-center bg-white/90 rounded-full p-1">
                     <button
-                      className="p-1 bg-white/80 rounded-full flex items-center justify-center"
+                      className="p-1.5 rounded-full flex items-center justify-center"
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleFavorite(image.id);
@@ -178,19 +178,20 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
                     >
                       <Heart 
                         className={cn(
-                          "h-4 w-4", 
+                          "h-5 w-5", 
                           favorites.has(image.id) ? "fill-red-500 text-red-500" : "text-gray-700"
                         )} 
                       />
                     </button>
+                    <div className="h-4 w-px bg-gray-300 mx-0.5"></div>
                     <button
-                      className="p-1 bg-white/80 rounded-full flex items-center justify-center"
+                      className="p-1.5 rounded-full flex items-center justify-center"
                       onClick={(e) => {
                         e.stopPropagation();
                         downloadImage(image.url, image.caption || "project-image");
                       }}
                     >
-                      <Download className="h-4 w-4 text-gray-700" />
+                      <Download className="h-5 w-5 text-gray-700" />
                     </button>
                   </div>
                 )}
