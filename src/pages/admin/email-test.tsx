@@ -17,7 +17,7 @@ const EmailTestPage: React.FC = () => {
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-6">Email Notification Testing</h1>
         <p className="mb-6 text-muted-foreground">
-          Use this page to test email notifications. This will help verify that Mailgun is configured correctly.
+          Use this page to test email notifications. This will help verify that Resend is configured correctly.
         </p>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -39,7 +39,7 @@ const EmailTestPage: React.FC = () => {
               <li><strong>new_photos_email</strong> - Sent when photos are added to a project</li>
             </ul>
             <p className="mt-4 text-muted-foreground">
-              These templates need to be configured in the Mailgun dashboard.
+              These templates are integrated into the application and sent via Resend.
             </p>
           </div>
         </div>

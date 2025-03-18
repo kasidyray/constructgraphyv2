@@ -1,17 +1,11 @@
-import formData from 'form-data';
-import Mailgun from 'mailgun.js';
+import { Resend } from 'resend';
 import { User, Project, ProjectImage } from '@/types';
 import logger from '@/utils/logger';
 
-// Initialize Mailgun client
-const mailgun = new Mailgun(formData);
-const mg = mailgun.client({
-  username: 'api',
-  key: import.meta.env.VITE_MAILGUN_API_KEY || ''
-});
+// Initialize Resend client
+const resend = new Resend(import.meta.env.VITE_RESEND_API_KEY || '');
 
-const DOMAIN = import.meta.env.VITE_MAILGUN_DOMAIN || 'sandbox-domain.mailgun.org';
-const FROM_EMAIL = import.meta.env.VITE_FROM_EMAIL || 'noreply@constructography.com';
+const FROM_EMAIL = import.meta.env.VITE_FROM_EMAIL || 'onboarding@resend.dev';
 
 /**
  * Send a welcome email to a new user
@@ -22,19 +16,17 @@ export async function sendWelcomeEmail(user: User): Promise<boolean> {
   try {
     logger.info(`Sending welcome email to ${user.email}`);
     
-    const data = {
+    const result = await resend.emails.send({
       from: `Constructography <${FROM_EMAIL}>`,
-      to: user.email,
+      to: [user.email],
       subject: 'Welcome to Constructography',
-      template: 'welcome_email',
-      'h:X-Mailgun-Variables': JSON.stringify({
-        name: user.name,
-        role: user.role,
-        login_url: `${window.location.origin}/login`
-      })
-    };
-
-    const result = await mg.messages.create(DOMAIN, data);
+      html: `
+        <h1>Welcome to Constructography, ${user.name}!</h1>
+        <p>Your account has been created with the role: ${user.role}.</p>
+        <p>You can log in at: <a href="${window.location.origin}/login">${window.location.origin}/login</a></p>
+      `
+    });
+    
     logger.info(`Welcome email sent to ${user.email}`, result);
     return true;
   } catch (error) {
@@ -62,24 +54,22 @@ export async function sendProjectPhotosNotification(
     
     // Get the first image as a preview (if available)
     const previewImage = images.length > 0 ? images[0].url : null;
+    const projectUrl = `${window.location.origin}/projects/${project.id}`;
     
-    const data = {
+    const result = await resend.emails.send({
       from: `Constructography <${FROM_EMAIL}>`,
-      to: homeowner.email,
+      to: [homeowner.email],
       subject: `New photos added to your project: ${project.title}`,
-      template: 'new_photos_email',
-      'h:X-Mailgun-Variables': JSON.stringify({
-        homeowner_name: homeowner.name,
-        project_title: project.title,
-        admin_name: adminName,
-        photos_count: images.length,
-        preview_image: previewImage,
-        project_url: `${window.location.origin}/projects/${project.id}`,
-        date: new Date().toLocaleDateString()
-      })
-    };
-
-    const result = await mg.messages.create(DOMAIN, data);
+      html: `
+        <h1>New Photos Added to Your Project</h1>
+        <p>Hello ${homeowner.name},</p>
+        <p>${adminName} has added ${images.length} new photo${images.length === 1 ? '' : 's'} to your project "${project.title}".</p>
+        ${previewImage ? `<p><img src="${previewImage}" alt="Project Preview" style="max-width: 100%; max-height: 300px;" /></p>` : ''}
+        <p><a href="${projectUrl}">View your project</a></p>
+        <p>Date: ${new Date().toLocaleDateString()}</p>
+      `
+    });
+    
     logger.info(`Project photos notification sent to ${homeowner.email}`, result);
     return true;
   } catch (error) {
@@ -89,7 +79,7 @@ export async function sendProjectPhotosNotification(
 }
 
 /**
- * Send a test email to verify the Mailgun configuration
+ * Send a test email to verify the Resend configuration
  * @param to The email address to send the test email to
  * @returns A boolean indicating whether the email was sent successfully
  */
@@ -97,15 +87,13 @@ export async function sendTestEmail(to: string): Promise<boolean> {
   try {
     logger.info(`Sending test email to ${to}`);
     
-    const data = {
+    const result = await resend.emails.send({
       from: `Constructography <${FROM_EMAIL}>`,
-      to: to,
+      to: [to],
       subject: 'Constructography Email Test',
-      text: 'This is a test email from Constructography to verify the Mailgun configuration.',
-      html: '<h1>Constructography Email Test</h1><p>This is a test email from Constructography to verify the Mailgun configuration.</p>'
-    };
-
-    const result = await mg.messages.create(DOMAIN, data);
+      html: '<h1>Constructography Email Test</h1><p>This is a test email from Constructography to verify the Resend configuration.</p>'
+    });
+    
     logger.info(`Test email sent to ${to}`, result);
     return true;
   } catch (error) {

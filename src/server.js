@@ -2,8 +2,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import FormData from 'form-data';
-import Mailgun from 'mailgun.js';
+import { Resend } from 'resend';
 
 // Load environment variables from .env.local
 dotenv.config({ path: '.env.local' });
@@ -23,12 +22,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
-// Initialize Mailgun
-const mailgun = new Mailgun(FormData);
-const mg = mailgun.client({
-  username: 'api',
-  key: process.env.VITE_MAILGUN_API_KEY
-});
+// Initialize Resend
+const resend = new Resend(process.env.VITE_RESEND_API_KEY);
 
 // Test email endpoint
 app.post('/api/test-email', async (req, res) => {
@@ -39,79 +34,85 @@ app.post('/api/test-email', async (req, res) => {
       return res.status(400).json({ error: 'Email is required' });
     }
     
-    // Check if Mailgun credentials are properly configured
-    const apiKey = process.env.VITE_MAILGUN_API_KEY;
-    const domain = process.env.VITE_MAILGUN_DOMAIN;
-    const fromEmail = process.env.VITE_FROM_EMAIL || `mailgun@${domain}`;
+    // Check if Resend credentials are properly configured
+    const apiKey = process.env.VITE_RESEND_API_KEY;
+    const fromEmail = process.env.VITE_FROM_EMAIL || 'onboarding@resend.dev';
     
-    console.log('Using Mailgun credentials:', { 
+    console.log('Using Resend credentials:', { 
       apiKey: apiKey ? `${apiKey.substring(0, 5)}...` : 'not set',
-      domain,
       fromEmail
     });
     
-    if (!apiKey || !domain) {
-      console.warn('Mailgun not properly configured. Using mock response.');
+    if (!apiKey) {
+      console.warn('Resend not properly configured. Using mock response.');
       // Return a mock success response for development
       return res.status(200).json({ 
-        message: 'Test email simulated (Mailgun not configured)',
-        note: 'This is a simulated response. To send actual emails, configure valid Mailgun credentials.'
+        message: 'Test email simulated (Resend not configured)',
+        note: 'This is a simulated response. To send actual emails, configure valid Resend API key.'
       });
     }
     
     console.log(`Sending test email to ${email}`);
     
-    const data = {
-      from: fromEmail,
-      to: email,
-      subject: 'Test Email from Constography',
-      text: 'This is a test email from Constography.',
-      html: '<h1>Test Email</h1><p>This is a test email from Constography.</p>',
-    };
-    
-    console.log('Email data:', data);
-    
     try {
-      const result = await mg.messages.create(domain, data);
+      const result = await resend.emails.send({
+        from: `Constructography <${fromEmail}>`,
+        to: [email],
+        subject: 'Test Email from Constography',
+        html: '<h1>Test Email</h1><p>This is a test email from Constography.</p>',
+      });
+      
       console.log('Email sent:', result);
       return res.status(200).json({ message: 'Test email sent successfully' });
-    } catch (mailgunError) {
-      console.error('Mailgun error details:', mailgunError);
+    } catch (resendError) {
+      console.error('Resend error details:', resendError);
       
-      // Check for specific Mailgun errors
-      if (mailgunError.status === 403 && mailgunError.details && mailgunError.details.includes('activate your Mailgun account')) {
+      // Handle specific Resend errors
+      if (resendError.statusCode === 403) {
         return res.status(403).json({ 
-          error: 'Mailgun account not activated',
-          details: 'Please check your email inbox for an activation link from Mailgun or log in to your Mailgun account to resend the activation email.',
-          originalError: mailgunError.details
+          error: 'Authentication error',
+          details: 'Please check your Resend API key.',
+          originalError: resendError.message
         });
-      } else if (mailgunError.status === 400 && mailgunError.details && mailgunError.details.includes('not a valid address')) {
+      } else if (resendError.statusCode === 400) {
         return res.status(400).json({ 
-          error: 'Invalid email address format',
-          details: 'The from email address is not valid. Please check your VITE_FROM_EMAIL environment variable.',
-          originalError: mailgunError.details
+          error: 'Invalid request',
+          details: 'The request was invalid. Please check the email addresses and other parameters.',
+          originalError: resendError.message
         });
-      } else if (mailgunError.status === 403 && mailgunError.details && mailgunError.details.includes('not authorized')) {
-        return res.status(403).json({ 
-          error: 'Recipient not authorized',
-          details: 'When using a Mailgun sandbox domain, you must first authorize the recipient email address. Please log in to your Mailgun account, go to the Sending > Domains section, click on your sandbox domain, and add the recipient email to the Authorized Recipients list.',
-          originalError: mailgunError.details
+      } else if (resendError.statusCode === 429) {
+        return res.status(429).json({ 
+          error: 'Rate limit exceeded',
+          details: 'You have exceeded the rate limit for sending emails. Please try again later.',
+          originalError: resendError.message
         });
       }
       
-      return res.status(500).json({ 
-        error: 'Failed to send test email', 
-        details: mailgunError.details || mailgunError.message,
-        statusCode: mailgunError.status
+      // Generic error handler
+      return res.status(resendError.statusCode || 500).json({
+        error: 'Failed to send email',
+        details: resendError.message || 'An unknown error occurred',
+        statusCode: resendError.statusCode
       });
     }
   } catch (error) {
-    console.error('Error sending test email:', error);
-    return res.status(500).json({ error: 'Failed to send test email', details: error.message });
+    console.error('Server error:', error);
+    return res.status(500).json({ error: 'Internal server error', message: error.message });
   }
 });
 
-// Start server
+// Logging endpoint
+app.post('/api/logs', (req, res) => {
+  const { level, message, ...meta } = req.body;
+  
+  if (!level || !message) {
+    return res.status(400).json({ error: 'Level and message are required' });
+  }
+  
+  console.log(`[${level.toUpperCase()}] ${message}`, meta);
+  return res.status(200).json({ success: true });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 }); 
