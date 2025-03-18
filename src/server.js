@@ -10,10 +10,12 @@ dotenv.config({ path: '.env.local' });
 const app = express();
 const PORT = process.env.SERVER_PORT || 3001;
 
+console.log(`Server will start on port ${PORT}`);
+
 // CORS configuration
 const corsOptions = {
-  origin: ['http://localhost:8080', 'http://localhost:5173'],
-  methods: ['GET', 'POST'],
+  origin: '*', // Allow all origins during development
+  methods: ['GET', 'POST', 'OPTIONS'],
   credentials: true,
   optionsSuccessStatus: 204
 };
@@ -21,6 +23,9 @@ const corsOptions = {
 // Middleware
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));
 
 // Initialize Resend
 const resend = new Resend(process.env.VITE_RESEND_API_KEY);
