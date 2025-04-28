@@ -1,8 +1,9 @@
 import React, { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import LoginForm from "@/components/auth/LoginForm";
 import LazyImage from "@/components/ui/LazyImage";
+import { Facebook, Instagram, Linkedin } from 'lucide-react'; // Import social icons
 
 const Login: React.FC = () => {
   const {
@@ -49,7 +50,15 @@ const Login: React.FC = () => {
       </div>
       
       {/* Right side - Login form */}
-      <div className="flex w-full flex-col justify-center bg-white px-8 lg:w-1/2">
+      <div className="relative flex w-full flex-col justify-between bg-white px-8 py-8 lg:w-1/2">
+        {/* Top Right Links */}
+        <div className="absolute top-8 right-8 space-x-4">
+          <Link to="/about" className="text-sm text-gray-600 hover:text-gray-900">About Us</Link>
+          <Link to="/contact" className="text-sm text-gray-600 hover:text-gray-900">Contact Us</Link>
+        </div>
+
+        {/* Center Content */}
+        <div className="flex flex-col justify-center flex-grow">
         <div className="mb-6 flex justify-center">
           <LazyImage 
             src="/lovable-uploads/f03a9d6d-3e35-4b47-a5da-11e2eb0d92b1.png" 
@@ -58,6 +67,20 @@ const Login: React.FC = () => {
           />
         </div>
         <LoginForm />
+        </div>
+
+        {/* Bottom Social Links */}
+        <div className="flex justify-center space-x-6 mt-8">
+          <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-600">
+            <Facebook className="h-5 w-5" />
+          </a>
+          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-600">
+            <Instagram className="h-5 w-5" />
+          </a>
+          <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-600">
+            <Linkedin className="h-5 w-5" />
+          </a>
+        </div>
       </div>
     </div>;
 };

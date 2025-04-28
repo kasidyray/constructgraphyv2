@@ -133,9 +133,16 @@ const Projects: React.FC = () => {
               <h1 className="text-3xl font-bold tracking-tight">{pageTitle}</h1>
               {user && (
                 <p className="text-muted-foreground">
-                  {homeownerId || urlBuilderId 
-                    ? `Viewing projects for ${displayName}`
-                    : `Viewing all projects`}
+                  {user?.role === 'admin' && homeownerId
+                    ? projects.length > 0 
+                      ? 'Click on a project to view more details'
+                      : 'No project to show yet'
+                    : user?.role === 'builder' && homeownerId
+                      ? 'Click on a project to view more details'
+                      : homeownerId || urlBuilderId 
+                        ? `Viewing projects for ${displayName}`
+                        : `Viewing all projects`
+                  }
                 </p>
               )}
             </div>

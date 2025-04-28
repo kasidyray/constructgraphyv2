@@ -104,15 +104,13 @@ const BuilderDashboard: React.FC<BuilderDashboardProps> = ({
     <div className="container mx-auto px-4 md:max-w-screen-xl py-8">
       <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight capitalize-text">
+            {
+              user.name ?? 'Builder' // Display builder's name, fallback to 'Builder'
+            }
+          </h1>
           <p className="text-muted-foreground">
-            Welcome back, {
-              user.first_name 
-                ? <span className="capitalize-text">{user.first_name}</span>
-                : user.name 
-                  ? <span className="capitalize-text">{user.name.split(' ')[0]}</span>
-                  : 'Builder'
-            }!
+            Here's your project overview
           </p>
         </div>
         

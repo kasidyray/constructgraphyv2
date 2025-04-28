@@ -20,10 +20,9 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   isAdmin = false,
   isBuilder = false
 }) => {
-  const statusColors = {
-    "planning": "bg-blue-500",
-    "in-progress": "bg-amber-500",
-    "completed": "bg-green-500",
+  const statusColors: Record<Project["status"], string> = {
+    "in-progress": "bg-yellow-500",
+    completed: "bg-green-500",
     "on-hold": "bg-gray-500",
   };
 
@@ -72,7 +71,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
         <CardContent className="space-y-3 p-4 flex-grow flex flex-col">
           <div>
             <h3 className="line-clamp-1 text-xl font-semibold">{project.title}</h3>
-            <p className="line-clamp-2 text-sm text-muted-foreground">{formattedDescription}</p>
+            {/* <p className="line-clamp-2 text-sm text-muted-foreground">{formattedDescription}</p> */}
           </div>
 
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -97,7 +96,11 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             </div>
             <div className="flex items-center text-sm text-muted-foreground">
               <User className="mr-1 h-4 w-4" />
-              <span className="capitalize-text">{project.homeownerName}</span>
+              <span className="capitalize-text">
+                {project.homeownerFirstName && project.homeownerLastName
+                  ? `${project.homeownerFirstName} ${project.homeownerLastName}`
+                  : project.homeownerName}
+              </span>
             </div>
           </div>
         </CardFooter>

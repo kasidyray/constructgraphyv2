@@ -43,15 +43,19 @@ const HomeownerDashboard: React.FC<HomeownerDashboardProps> = ({
     fetchProjects();
   }, [user.id]);
 
-  // Extract first name from email or use available name
-  const firstName = user.first_name || user.name?.split(' ')[0] || user.email.split('@')[0];
+  // Extract first name, try user.first_name first
+  const firstName = user.first_name || user.name?.split(' ')[0] || user.email?.split('@')[0] || 'User';
+  const projectCount = projects.length;
+  const projectText = projectCount === 1 ? 'project' : 'projects';
 
   return (
     <div className="container mx-auto px-4 md:max-w-screen-xl py-8">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">My Projects</h1>
-        <p className="text-muted-foreground">
-          Welcome back, <span className="capitalize-text">{firstName}</span>!
+        <h1 className="text-3xl font-bold tracking-tight capitalize">Welcome, {firstName}!</h1>
+        <p className="text-muted-foreground mt-1">
+          {loading ? 'Loading project info...' : 
+           error ? 'Could not load project info.' : 
+           `You have ${projectCount} active ${projectText}. Click on any to see details.`}
         </p>
       </div>
 

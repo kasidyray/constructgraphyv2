@@ -13,14 +13,6 @@
     "dev": "npm run dev"
   },
   "mcpServers": {
-    "supabase": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-postgres", "postgresql://postgres.oxobdlvtrwgzxnpkbvmz:FRwbzkgrrCxKbsYF@aws-0-eu-west-2.pooler.supabase.com:5432/postgres"]
-    },
-    "browser-tools": {
-      "command": "npx",
-      "args": ["@agentdeskai/browser-tools-mcp@1.2.0"]
-    }
   },
   "supabase": {
     "url": "https://oxobdlvtrwgzxnpkbvmz.supabase.co",

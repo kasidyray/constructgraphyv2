@@ -79,10 +79,8 @@ const Header: React.FC = () => {
         </div>
 
         <nav className="hidden md:flex md:items-center md:space-x-4">
-          {isAuthenticated && <>
-              
-              
-            </>}
+          {/* Removed About Us link */}
+          {/* {isAuthenticated && <> ... other links could go here ... </>} */}
         </nav>
 
         <div className="flex items-center space-x-4">

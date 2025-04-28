@@ -184,24 +184,48 @@ export async function createUser(user: Omit<User, 'id' | 'createdAt'>): Promise<
   }
 }
 
-// Update a user
-export async function updateUser(id: string, updates: Partial<User>): Promise<User | null> {
+// Update user profile data
+export async function updateUser(userId: string, updates: Partial<User>): Promise<User | null> {
+  // Ensure we don't try to update the ID or role inappropriately
+  // Role updates should likely be handled by a separate admin function
+  const { id, role, email_confirmed_at, last_sign_in_at, projects, builderName, ...validUpdates } = updates;
+
+  // Prevent email updates for now, as it might require re-verification
+  if (validUpdates.email) {
+    console.warn("Email updates are not allowed through this function.");
+    delete validUpdates.email;
+  }
+
+  // Prevent updating createdAt
+  if ('createdAt' in validUpdates) {
+    delete (validUpdates as Partial<User>).createdAt;
+  }
+  
+  // Remove fields that don't exist directly on the profiles table
+  // (No extra fields from Project type here)
+
+  if (Object.keys(validUpdates).length === 0) {
+    console.warn("No valid fields provided for update.");
+    // Optionally return the existing user data or null/error
+    return getUserById(userId); // Return existing data if no valid updates
+  }
+
   try {
     const { data, error } = await supabaseAdmin
       .from('profiles')
-      .update(updates)
-      .eq('id', id)
+      .update(validUpdates) // Pass only the allowed updates
+      .eq('id', userId)
       .select()
       .single();
-    
+
     if (error) {
-      console.error('Error updating user in Supabase:', error);
-      throw new Error(`Failed to update user: ${error.message}`);
+      console.error('Error updating user profile in Supabase:', error);
+      throw new Error(`Failed to update user profile: ${error.message}`);
     }
-    
+
     return data;
   } catch (error) {
-    console.error('Error connecting to Supabase:', error);
+    console.error('Error connecting to Supabase for user update:', error);
     throw error;
   }
 } 

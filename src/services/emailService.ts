@@ -5,6 +5,8 @@ import logger from '@/utils/logger';
 // Initialize Resend client
 const resend = new Resend(import.meta.env.VITE_RESEND_API_KEY || '');
 
+// When in testing mode, you can only send to the email address associated with your Resend account
+// For testing, you should use "onboarding@resend.dev" as FROM_EMAIL
 const FROM_EMAIL = import.meta.env.VITE_FROM_EMAIL || 'onboarding@resend.dev';
 
 /**

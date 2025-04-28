@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Project } from "@/types";
+import { Project, User } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -51,13 +51,27 @@ const ProjectStatusUpdate: React.FC<ProjectStatusUpdateProps> = ({
     
     setIsUpdating(true);
     try {
+      // Convert AuthUser to User type if needed
+      const userForUpdate = user ? {
+        id: user.id,
+        email: user.email,
+        name: (user.first_name && user.last_name) 
+              ? `${user.first_name} ${user.last_name}` 
+              : user.first_name 
+                ? user.first_name 
+                : user.email,
+        role: user.role,
+        createdAt: user.created_at || new Date(),
+        // Add other fields as needed, ensuring they exist on the AuthContext user type
+      } as User : undefined;
+
       const updatedProject = await updateProject(
         project.id, 
         {
-          status: status as "planning" | "in-progress" | "completed" | "on-hold",
+          status: status as "in-progress" | "completed" | "on-hold",
           progress
         }, 
-        user
+        userForUpdate // Pass the correctly typed user object
       );
       
       if (updatedProject) {

@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Edit, MapPin, Trash2, User, Calendar, Clock, ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Project } from "@/types";
+import { Project, User as UserProfile } from "@/types";
+import { getUserById } from "@/services/userService";
 
 interface ProjectHeaderProps {
   project: Project;
@@ -13,7 +14,22 @@ interface ProjectHeaderProps {
 
 const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, isAdmin }) => {
   const navigate = useNavigate();
-  
+  const [homeownerProfile, setHomeownerProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    const fetchHomeowner = async () => {
+      if (project.homeownerId) {
+        try {
+          const profile = await getUserById(project.homeownerId);
+          setHomeownerProfile(profile);
+        } catch (error) {
+          console.error("Failed to fetch homeowner profile:", error);
+        }
+      }
+    };
+    fetchHomeowner();
+  }, [project.homeownerId]);
+
   const formatDate = (date: Date | string) => {
     return new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
@@ -22,10 +38,9 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, isAdmin }) => {
     });
   };
 
-  const statusColors = {
-    "planning": "bg-blue-500",
-    "in-progress": "bg-amber-500",
-    "completed": "bg-green-500",
+  const statusColors: Record<Project["status"], string> = {
+    "in-progress": "bg-yellow-500",
+    completed: "bg-green-500",
     "on-hold": "bg-gray-500",
   };
 
@@ -44,6 +59,22 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, isAdmin }) => {
 
   const handleGoBack = () => {
     navigate(-1);
+  };
+
+  // Construct homeowner full name
+  const getHomeownerFullName = () => {
+    if (homeownerProfile) {
+      const firstName = homeownerProfile.first_name || '';
+      const lastName = homeownerProfile.last_name || '';
+      if (firstName && lastName) {
+        return `${capitalizeFirstLetter(firstName)} ${capitalizeFirstLetter(lastName)}`;
+      }
+      if (firstName) {
+        return capitalizeFirstLetter(firstName);
+      }
+    }
+    // Fallback to existing name or formatted email
+    return capitalizeFirstLetter(project.homeownerName || project.homeownerId.split('@')[0]);
   };
 
   return (
@@ -66,11 +97,7 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, isAdmin }) => {
             </div>
             <div className="flex items-center">
               <User className="mr-1 h-4 w-4" />
-              {project.homeownerName}
-            </div>
-            <div className="flex items-center">
-              <Calendar className="mr-1 h-4 w-4" />
-              {formatDate(project.createdAt)}
+              {getHomeownerFullName()}
             </div>
             <div className="flex items-center">
               <Clock className="mr-1 h-4 w-4" />

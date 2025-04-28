@@ -1,5 +1,5 @@
 import React from "react";
-import { BarChart, Calendar, FolderOpen } from "lucide-react";
+import { BarChart, Calendar, FolderOpen, PauseCircle } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -20,19 +20,19 @@ const StatCards: React.FC<StatCardsProps> = ({ projects }) => {
   const projectCounts = validProjects.reduce((counts, project) => {
     const status = project.status || '';
     
-    if (status === "in-progress") {
-      counts.inProgress += 1;
-    } else if (status === "completed") {
+    if (status === "completed") {
       counts.completed += 1;
-    } else if (status === "planning") {
-      counts.planning += 1;
+    } else if (status === "in-progress") {
+      counts.inProgress += 1;
+    } else if (status === "on-hold") {
+      counts.onHold += 1;
     }
     
     return counts;
   }, { 
-    inProgress: 0, 
     completed: 0, 
-    planning: 0 
+    inProgress: 0, 
+    onHold: 0 
   });
 
   return (
@@ -70,21 +70,6 @@ const StatCards: React.FC<StatCardsProps> = ({ projects }) => {
       <Card className="slide-up delay-300">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">
-            Planning Phase
-          </CardTitle>
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{projectCounts.planning}</div>
-          <p className="text-xs text-muted-foreground">
-            Projects in planning
-          </p>
-        </CardContent>
-      </Card>
-      
-      <Card className="slide-up delay-400">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">
             Completed
           </CardTitle>
           <svg
@@ -106,6 +91,19 @@ const StatCards: React.FC<StatCardsProps> = ({ projects }) => {
           <div className="text-2xl font-bold">{projectCounts.completed}</div>
           <p className="text-xs text-muted-foreground">
             Successfully completed
+          </p>
+        </CardContent>
+      </Card>
+      
+      <Card className="slide-up delay-400">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">On Hold</CardTitle>
+          <PauseCircle className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{projectCounts.onHold}</div>
+          <p className="text-xs text-muted-foreground">
+            Projects currently paused
           </p>
         </CardContent>
       </Card>

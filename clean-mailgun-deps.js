@@ -1,9 +1,10 @@
 /**
  * Script to remove Mailgun dependencies after migration to Resend
  */
-const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+import { execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 console.log('Removing Mailgun dependencies...');
 
@@ -13,7 +14,9 @@ try {
   console.log('✅ Successfully removed Mailgun packages');
   
   // Update .env.local file to remove Mailgun variables and add Resend ones
-  const envPath = path.join(process.cwd(), '.env.local');
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  const envPath = path.resolve(__dirname, '.env.local');
   
   if (fs.existsSync(envPath)) {
     let envContent = fs.readFileSync(envPath, 'utf8');

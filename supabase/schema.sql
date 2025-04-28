@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS projects (
   "title" TEXT NOT NULL,
   "description" TEXT NOT NULL,
   "address" TEXT NOT NULL,
-  "status" TEXT NOT NULL CHECK ("status" IN ('planning', 'in-progress', 'completed', 'on-hold')),
+  "status" TEXT NOT NULL CHECK ("status" IN ('in-progress', 'completed', 'on-hold')),
   "homeownerId" UUID NOT NULL REFERENCES users("id"),
   "homeownerName" TEXT NOT NULL,
   "builderId" UUID REFERENCES users("id"),

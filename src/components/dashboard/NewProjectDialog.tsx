@@ -28,10 +28,9 @@ interface NewProjectDialogProps {
 }
 
 const PROJECT_STATUSES = [
-  { value: "planning", label: "Planning" },
   { value: "in-progress", label: "In Progress" },
+  { value: "completed", label: "Completed" },
   { value: "on-hold", label: "On Hold" },
-  { value: "completed", label: "Completed" }
 ];
 
 const NewProjectDialog: React.FC<NewProjectDialogProps> = ({ 
@@ -46,12 +45,13 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("");
-  const [status, setStatus] = useState<string>("planning");
-  const [homeownerId, setHomeownerId] = useState<string>(propHomeownerId || preSelectedHomeownerId || "");
+  const [homeownerId, setHomeownerId] = useState<string | undefined>(undefined);
+  const [status, setStatus] = useState<string>("in-progress");
   const [builderId, setBuilderId] = useState<string>("none");
   const [progress, setProgress] = useState<number>(0);
   const [thumbnail, setThumbnail] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   // State for users from database
   const [homeowners, setHomeowners] = useState<User[]>([]);
@@ -94,41 +94,33 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!title || !description || !address || !homeownerId) {
-      toast({
-        title: "Error",
-        description: "Please fill all required fields",
-        variant: "destructive",
-      });
+
+    if (!homeownerId) {
+      setError("Please select a homeowner.");
       return;
     }
-    
-    // Find the selected homeowner to get their name
+
     const selectedHomeowner = homeowners.find(h => h.id === homeownerId);
     if (!selectedHomeowner) {
-      toast({
-        title: "Error",
-        description: "Selected homeowner not found",
-        variant: "destructive",
-      });
+      setError("Selected homeowner not found. Please refresh and try again.");
       return;
     }
     
+    setError(null);
     setIsSubmitting(true);
-    
+
     try {
-      // Create new project object without ID (let Supabase generate it)
-      const newProjectData = {
+      // Type assertion to ensure required fields are present
+      const newProjectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt'> = {
         title,
         description,
         address,
-        status: status as "planning" | "in-progress" | "completed" | "on-hold",
-        homeownerId,
+        homeownerId, // Now guaranteed to be a string
         homeownerName: selectedHomeowner.name,
         builderId: builderId === "none" ? undefined : builderId,
-        thumbnail: thumbnail || undefined,
+        status: status as "in-progress" | "completed" | "on-hold",
         progress: progress,
+        thumbnail: thumbnail || undefined,
       };
       
       console.log('Submitting project data:', newProjectData);
@@ -174,13 +166,12 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
     setTitle("");
     setDescription("");
     setAddress("");
-    setStatus("planning");
-    if (!preSelectedHomeownerId && !propHomeownerId) {
-      setHomeownerId("");
-    }
+    setHomeownerId(undefined);
+    setStatus("in-progress");
     setBuilderId("none");
     setProgress(0);
     setThumbnail("");
+    setHomeowners([]);
   };
 
   const handleDialogClose = (open: boolean) => {
@@ -231,7 +222,7 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="description">Description *</Label>
+              <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
                 placeholder="A contemporary 3-bedroom lakefront property with panoramic views."

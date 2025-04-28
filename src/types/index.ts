@@ -20,11 +20,13 @@ export interface User {
 export interface Project {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   address: string;
-  status: "planning" | "in-progress" | "completed" | "on-hold";
+  status: "in-progress" | "completed" | "on-hold";
   homeownerId: string;
   homeownerName: string;
+  homeownerFirstName?: string;
+  homeownerLastName?: string;
   builderId?: string;
   createdAt: Date | string;
   updatedAt: Date | string;

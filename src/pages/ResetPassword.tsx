@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,80 +7,92 @@ import { Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
 import LazyImage from "@/components/ui/LazyImage";
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+const formSchema = z.object({
+  password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"], // path of error
+});
 
 const ResetPassword: React.FC = () => {
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hash, setHash] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
+  // Check for password recovery event on initial load
   useEffect(() => {
-    // Get the hash from the URL
-    const hashFromUrl = window.location.hash.substring(1);
-    if (hashFromUrl) {
-      setHash(hashFromUrl);
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event == "PASSWORD_RECOVERY") {
+        // Handle password recovery logic here
+        // Typically, you might automatically log the user in or prompt them
+        // For now, we just check the event
+        console.log("Password recovery event detected");
     }
+    });
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!password || !confirmPassword) {
-      toast({
-        title: "Missing information",
-        description: "Please enter both password fields",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (password !== confirmPassword) {
-      toast({
-        title: "Passwords don't match",
-        description: "Please make sure your passwords match",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (password.length < 8) {
-      toast({
-        title: "Password too short",
-        description: "Password must be at least 8 characters long",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      password: '',
+      confirmPassword: '',
+    },
+  });
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsLoading(true);
+    setError(null);
+    setSuccess(false);
+
     try {
-      const { error } = await supabase.auth.updateUser({ password });
-      
-      if (error) {
-        throw error;
-      }
-      
-      toast({
-        title: "Password updated",
-        description: "Your password has been updated successfully. You can now log in with your new password.",
+      // Supabase handles the token verification implicitly when updating the user
+      const { error: updateError } = await supabase.auth.updateUser({ 
+        password: values.password 
       });
       
-      // Redirect to login page
-      setTimeout(() => {
-        navigate("/login");
-      }, 2000);
-    } catch (error: any) {
+      if (updateError) {
+        setError(updateError.message);
+        toast({
+          variant: 'destructive',
+          title: 'Error Updating Password',
+          description: updateError.message,
+        });
+      } else {
+        setSuccess(true);
+        toast({
+          title: 'Password Updated Successfully',
+          description: 'You can now log in with your new password.',
+      });
+        // Optionally redirect after a delay
+        setTimeout(() => navigate('/login'), 3000);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred.';
+      setError(message);
       toast({
-        title: "Error",
-        description: error.message || "Failed to update password",
-        variant: "destructive",
+        variant: 'destructive',
+        title: 'Error',
+        description: message,
       });
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
-  };
+  }
 
   return (
     <div className="flex min-h-screen w-full">
@@ -123,59 +135,57 @@ const ResetPassword: React.FC = () => {
             </p>
           </div>
           
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="password">New Password</Label>
-              <Input 
-                id="password" 
-                type="password" 
-                placeholder="••••••••••" 
-                value={password} 
-                onChange={e => setPassword(e.target.value)} 
-                disabled={isSubmitting} 
-                required 
-                className="h-12" 
-              />
+          {success ? (
+            <div className="text-center text-green-600">
+              <p>Your password has been updated successfully!</p>
+              <p className="mt-4">
+                <Link to="/login" className="text-[#D1522E] hover:underline">
+                  Proceed to Login
+                </Link>
+              </p>
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input 
-                id="confirmPassword" 
-                type="password" 
-                placeholder="••••••••••" 
-                value={confirmPassword} 
-                onChange={e => setConfirmPassword(e.target.value)} 
-                disabled={isSubmitting} 
-                required 
-                className="h-12" 
-              />
-            </div>
-            
-            <Button 
-              type="submit" 
-              className="h-12 w-full bg-[#D1522E] hover:bg-[#D1522E]/90" 
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Updating...
-                </>
-              ) : "Reset Password"}
-            </Button>
-            
-            <div className="text-center">
-              <Button 
-                variant="link" 
-                className="text-sm text-[#D1522E] hover:text-[#D1522E]/80" 
-                type="button"
-                onClick={() => navigate("/login")}
-              >
-                Back to Login
+          ) : (
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>New Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirm New Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {error && (
+                  <p className="text-sm font-medium text-destructive">{error}</p>
+                )}
+                <Button type="submit" className="w-full bg-[#D1522E] hover:bg-[#B8401F]" disabled={isLoading}>
+                  {isLoading ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Updating...</>
+                  ) : (
+                    'Reset Password'
+                  )}
               </Button>
-            </div>
           </form>
+            </Form>
+          )}
         </div>
       </div>
     </div>

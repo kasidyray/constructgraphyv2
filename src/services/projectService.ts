@@ -10,7 +10,8 @@ export async function getProjects(): Promise<Project[]> {
   try {
     const { data, error } = await supabaseAdmin
       .from('projects')
-      .select('*')
+      // Select all project fields and homeowner's first/last name from profiles
+      .select('*, homeownerProfile:profiles!projects_homeownerId_fkey(first_name, last_name)')
       .order('updatedAt', { ascending: false });
     
     if (error) {
@@ -18,7 +19,12 @@ export async function getProjects(): Promise<Project[]> {
       throw new Error(`Failed to fetch projects: ${error.message}`);
     }
     
-    return data || [];
+    // Map the fetched data to the Project type, including new fields
+    return (data || []).map(p => ({
+      ...p,
+      homeownerFirstName: p.homeownerProfile?.first_name,
+      homeownerLastName: p.homeownerProfile?.last_name,
+    }));
   } catch (error) {
     console.error('Error connecting to Supabase:', error);
     throw error;
@@ -30,7 +36,8 @@ export async function getHomeownerProjects(homeownerId: string): Promise<Project
   try {
     const { data, error } = await supabaseAdmin
       .from('projects')
-      .select('*')
+      // Select all project fields and homeowner's first/last name from profiles
+      .select('*, homeownerProfile:profiles!projects_homeownerId_fkey(first_name, last_name)')
       .eq('homeownerId', homeownerId)
       .order('updatedAt', { ascending: false });
     
@@ -39,7 +46,12 @@ export async function getHomeownerProjects(homeownerId: string): Promise<Project
       throw new Error(`Failed to fetch homeowner projects: ${error.message}`);
     }
     
-    return data || [];
+    // Map the fetched data
+    return (data || []).map(p => ({
+      ...p,
+      homeownerFirstName: p.homeownerProfile?.first_name,
+      homeownerLastName: p.homeownerProfile?.last_name,
+    }));
   } catch (error) {
     console.error('Error connecting to Supabase:', error);
     throw error;
@@ -51,7 +63,8 @@ export async function getBuilderProjects(builderId: string): Promise<Project[]> 
   try {
     const { data, error } = await supabaseAdmin
       .from('projects')
-      .select('*')
+      // Select all project fields and homeowner's first/last name from profiles
+      .select('*, homeownerProfile:profiles!projects_homeownerId_fkey(first_name, last_name)')
       .eq('builderId', builderId)
       .order('updatedAt', { ascending: false });
     
@@ -60,7 +73,12 @@ export async function getBuilderProjects(builderId: string): Promise<Project[]> 
       throw new Error(`Failed to fetch builder projects: ${error.message}`);
     }
     
-    return data || [];
+    // Map the fetched data
+    return (data || []).map(p => ({
+      ...p,
+      homeownerFirstName: p.homeownerProfile?.first_name,
+      homeownerLastName: p.homeownerProfile?.last_name,
+    }));
   } catch (error) {
     console.error('Error connecting to Supabase:', error);
     throw error;
@@ -72,16 +90,27 @@ export async function getProjectById(id: string): Promise<Project | null> {
   try {
     const { data, error } = await supabaseAdmin
       .from('projects')
-      .select('*')
+      // Select all project fields and homeowner's first/last name from profiles
+      .select('*, homeownerProfile:profiles!projects_homeownerId_fkey(first_name, last_name)')
       .eq('id', id)
       .single();
     
     if (error) {
+      // Handle case where project is not found gracefully
+      if (error.code === 'PGRST116') { 
+        console.warn(`Project with ID ${id} not found.`);
+        return null;
+      }
       console.error('Error fetching project:', error);
       throw new Error(`Failed to fetch project: ${error.message}`);
     }
     
-    return data;
+    // Map the fetched data if project exists
+    return data ? {
+      ...data,
+      homeownerFirstName: data.homeownerProfile?.first_name,
+      homeownerLastName: data.homeownerProfile?.last_name,
+    } : null;
   } catch (error) {
     console.error('Error connecting to Supabase:', error);
     throw error;
@@ -89,7 +118,7 @@ export async function getProjectById(id: string): Promise<Project | null> {
 }
 
 // Create a new project
-export async function createProject(project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>): Promise<Project | null> {
+export async function createProject(project: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'homeownerFirstName' | 'homeownerLastName'>): Promise<Project | null> {
   try {
     // Prepare the project data for Supabase
     const newProject = {

@@ -141,9 +141,11 @@ const HomeownerProjectView: React.FC<HomeownerProjectViewProps> = ({
     // If showing only favorites, filter by favorites first
     if (showOnlyFavorites) {
       filtered = filtered.filter(image => favorites.has(image.id));
+      // When showing only favorites, return them directly without applying date filters
+      return filtered;
     }
     
-    // Then apply year and month filters
+    // Otherwise, apply year and month filters to all images
     return filtered.filter(image => {
       const imageDate = new Date(image.createdAt);
       const imageYear = imageDate.getFullYear().toString();

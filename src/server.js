@@ -10,12 +10,10 @@ dotenv.config({ path: '.env.local' });
 const app = express();
 const PORT = process.env.SERVER_PORT || 3001;
 
-console.log(`Server will start on port ${PORT}`);
-
-// CORS configuration
+// CORS configuration - more permissive for development
 const corsOptions = {
-  origin: '*', // Allow all origins during development
-  methods: ['GET', 'POST', 'OPTIONS'],
+  origin: true, // Allow all origins in development
+  methods: ['GET', 'POST'],
   credentials: true,
   optionsSuccessStatus: 204
 };
@@ -23,9 +21,6 @@ const corsOptions = {
 // Middleware
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
-
-// Handle preflight requests
-app.options('*', cors(corsOptions));
 
 // Initialize Resend
 const resend = new Resend(process.env.VITE_RESEND_API_KEY);
@@ -68,6 +63,26 @@ app.post('/api/test-email', async (req, res) => {
       });
       
       console.log('Email sent:', result);
+      
+      // Check if there's an error in the result
+      if (result.error) {
+        // Specific handling for testing mode limitation
+        if (result.error.statusCode === 403 && result.error.message.includes('You can only send testing emails to your own email address')) {
+          const yourEmail = result.error.message.match(/\(([^)]+)\)/)[1];
+          return res.status(403).json({ 
+            error: 'Resend testing mode limitation',
+            details: `In testing mode, you can only send emails to ${yourEmail}. To send to other recipients, please verify a domain at resend.com/domains.`,
+            originalError: result.error.message
+          });
+        }
+        
+        return res.status(result.error.statusCode || 500).json({
+          error: 'Resend API error',
+          details: result.error.message,
+          statusCode: result.error.statusCode
+        });
+      }
+      
       return res.status(200).json({ message: 'Test email sent successfully' });
     } catch (resendError) {
       console.error('Resend error details:', resendError);
