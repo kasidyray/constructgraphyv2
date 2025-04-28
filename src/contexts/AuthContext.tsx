@@ -21,6 +21,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<{ error?: string }>;
   logout: () => Promise<void>;
+  refreshAuthUser: () => Promise<void>;
 }
 
 // Create the auth context
@@ -43,15 +44,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (error) {
+        console.error("Error fetching profile for refresh:", error);
         return null;
       }
-
-      if (!data) {
-        return null;
-      }
-
       return data as User;
     } catch (error) {
+       console.error("Catch block error fetching profile for refresh:", error);
       return null;
     }
   };
@@ -164,6 +162,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
+  // NEW: Function to manually refresh the user profile data in the context
+  const refreshAuthUser = async () => {
+    // setLoading(true); // Optional: show loading state during refresh
+    try {
+      // Get the latest Supabase Auth user data
+      const { data: { user: currentAuthUser }, error: authError } = await supabase.auth.getUser();
+
+      if (authError) {
+        throw authError;
+      }
+
+      if (currentAuthUser) {
+        // Fetch the associated profile using the existing function
+        const profile = await fetchUserProfile(currentAuthUser.id);
+        if (profile) {
+          setUser(profile); // Update the context state
+        } else {
+          // Handle case where profile might have been deleted unexpectedly
+          console.warn("Profile not found during refresh for user:", currentAuthUser.id);
+          setUser(null); // Clear user if profile is gone
+          // Optionally logout or handle differently
+        }
+      } else {
+        // No authenticated user found
+        setUser(null);
+        setSession(null);
+      }
+    } catch (error) {
+      console.error("Error refreshing user data:", error);
+      toast({
+        variant: "destructive",
+        title: "Refresh Error",
+        description: "Could not refresh user data.",
+      });
+      // Optionally logout if refresh fails critically
+      // await logout();
+    } finally {
+      // setLoading(false);
+    }
+  };
+
   // Login function
   const login = async (email: string, password: string): Promise<{ error?: string }> => {
     try {
@@ -212,6 +251,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!user && !!session,
         login,
         logout,
+        refreshAuthUser,
       }}
     >
       {children}

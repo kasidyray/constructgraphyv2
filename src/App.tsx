@@ -19,6 +19,7 @@ import TermsOfService from "@/pages/TermsOfService";
 import CookiePolicy from "@/pages/CookiePolicy";
 import AboutUs from "@/pages/AboutUs";
 import ContactUs from "@/pages/ContactUs";
+import UserProfileSettings from "@/pages/UserProfileSettings";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,7 @@ const App = () => (
               <Route path="/cookie-policy" element={<CookiePolicy />} />
               <Route path="/about" element={<AboutUs />} />
               <Route path="/contact" element={<ContactUs />} />
+              <Route path="/profile-settings" element={<UserProfileSettings />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

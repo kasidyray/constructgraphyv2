@@ -109,16 +109,17 @@ const Header: React.FC = () => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="hover:border-transparent">
-                  <Link to="#" className="flex cursor-pointer items-center w-full">
+                  <Link to="/profile-settings" className="flex cursor-pointer items-center w-full">
                     <UserIcon className="mr-2 h-4 w-4" />
                     <span>Profile</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="hover:border-transparent">
-                  <Link to="#" className="flex cursor-pointer items-center w-full">
+                  {/* Removed original Settings link, as it's merged */}
+                  {/* <Link to="#" className="flex cursor-pointer items-center w-full">
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
-                  </Link>
+                  </Link> */}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
