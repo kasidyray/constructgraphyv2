@@ -15,11 +15,11 @@ const Footer = () => {
 
         {/* Center: Legal Links */}
         <nav className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm">
-          <Link to="/terms-of-service" className="hover:text-foreground transition-colors">Terms of Service</Link>
-          <Link to="/privacy-policy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
-          <Link to="/cookie-policy" className="hover:text-foreground transition-colors">Cookie Policy</Link>
           <Link to="/about" className="hover:text-foreground transition-colors">About Us</Link>
           <Link to="/contact" className="hover:text-foreground transition-colors">Contact Us</Link>
+          <Link to="/terms-of-service" className="hover:text-foreground transition-colors">Terms</Link>
+          <Link to="/privacy-policy" className="hover:text-foreground transition-colors">Privacy</Link>
+          <Link to="/cookie-policy" className="hover:text-foreground transition-colors">Cookies</Link>
         </nav>
 
         {/* Right Side: Social Links */}
