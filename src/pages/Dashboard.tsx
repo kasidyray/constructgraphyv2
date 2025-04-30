@@ -48,9 +48,11 @@ const Dashboard: React.FC = () => {
   const dashboardUser: User = {
     id: user.id,
     email: user.email,
-    name: user.first_name && user.last_name 
-      ? `${user.first_name} ${user.last_name}` 
-      : user.email,
+    name: user.role === 'builder' && user.name 
+      ? user.name
+      : user.first_name && user.last_name 
+        ? `${user.first_name} ${user.last_name}` 
+        : user.name || user.email,
     first_name: user.first_name,
     last_name: user.last_name,
     role: user.role,

@@ -2,8 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from "../_shared/cors.ts"
 
 // Ensure RESEND_API_KEY and CONTACT_FORM_TARGET_EMAIL are set in Supabase Function environment variables
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-const CONTACT_FORM_TARGET_EMAIL = Deno.env.get("CONTACT_FORM_TARGET_EMAIL");
+// const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const CONTACT_FORM_TARGET_EMAIL = Deno.env.get("CONTACT_FORM_TARGET_EMAIL"); // Keep this for potential future use
 
 serve(async (req) => {
   // Handle CORS preflight request
@@ -13,11 +13,13 @@ serve(async (req) => {
 
   try {
     // Ensure environment variables are set
-    if (!RESEND_API_KEY) {
-      throw new Error("Missing RESEND_API_KEY environment variable.");
-    }
+    // if (!RESEND_API_KEY) {
+    //   throw new Error("Missing RESEND_API_KEY environment variable.");
+    // }
     if (!CONTACT_FORM_TARGET_EMAIL) {
-      throw new Error("Missing CONTACT_FORM_TARGET_EMAIL environment variable.");
+      // We might still need the target email for a different service
+      console.warn("Missing CONTACT_FORM_TARGET_EMAIL environment variable, but proceeding.");
+      // throw new Error("Missing CONTACT_FORM_TARGET_EMAIL environment variable.");
     }
 
     // Parse request body (include optional phone)
@@ -43,7 +45,8 @@ serve(async (req) => {
     emailHtml += `<p><strong>Message:</strong></p>
                   <p>${message.replace(/\n/g, '<br>')}</p>`;
 
-    // Send email using Resend
+    // Send email using Resend - COMMENTED OUT
+    /*
     const resendUrl = 'https://api.resend.com/emails';
     const emailPayload = {
       from: 'Contact Form <onboarding@resend.dev>', // Required: Use a verified domain in Resend later
@@ -67,9 +70,11 @@ serve(async (req) => {
       console.error("Resend API error:", errorBody);
       throw new Error(`Resend API failed with status: ${resendResponse.status}`);
     }
+    */
 
-    // Return success response
-    return new Response(JSON.stringify({ success: true, message: "Message sent successfully!" }), {
+    // Return success response (simulated - no email sent)
+    console.log(`Simulated email sending for contact form submission from ${name} (${email})`);
+    return new Response(JSON.stringify({ success: true, message: "Message received (email sending disabled)." }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });

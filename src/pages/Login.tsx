@@ -67,6 +67,13 @@ const Login: React.FC = () => {
           />
         </div>
         <LoginForm />
+        {/* Add Sign Up Link */}
+        <p className="mt-4 text-center text-sm text-gray-600">
+          Don't have an account?{' '}
+          <Link to="/signup" className="font-medium text-[#D1522E] hover:underline">
+            Sign Up
+          </Link>
+        </p>
         </div>
 
         {/* Bottom Social Links */}
