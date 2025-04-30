@@ -5,10 +5,15 @@ async function testLogin() {
   console.log('Starting login test...');
   
   try {
+    const email = 'admin@example.com'; // Or any other test user
+    // WARNING: Password removed for security.
+    // Provide password securely for testing.
+    // const password = 'YOUR_TEST_PASSWORD';
+
     // Test login with admin credentials
     const { data, error } = await supabase.auth.signInWithPassword({
-      email: 'admin@example.com',
-      password: 'password123',
+      email,
+      // password: password, // Provide password here
     });
     
     console.log('Auth response:', { data, error });

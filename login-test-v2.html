@@ -55,84 +55,61 @@
         <input type="email" id="email" value="admin@example.com">
         
         <label for="password">Password:</label>
-        <input type="password" id="password" value="password123">
+        <input type="password" id="password" placeholder="Enter test password">
         
-        <button id="loginBtn">Test Login</button>
-        <button id="clearBtn">Clear Results</button>
+        <button id="loginBtn">Test Supabase Auth v2 Login</button>
+        <button id="clearBtn">Clear</button>
         <button id="goToAppBtn">Go to App (Port 8084)</button>
     </div>
     
-    <div class="result" id="result">
-        <p>Results will appear here...</p>
-    </div>
+    <div id="result" class="result"></div>
     
     <script type="module">
-        // Import Supabase from CDN
-        import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-        
-        // Initialize Supabase client
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
         const supabaseUrl = 'https://oxobdlvtrwgzxnpkbvmz.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94b2JkbHZ0cndnenhucGtidm16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE4NzU4NjMsImV4cCI6MjA1NzQ1MTg2M30.QAprkWsOEvYGl_vdV6bXveuh7ZcEF1N5TZoWuGGE_ys';
-        
-        // Create the Supabase client
-        const supabase = createClient(supabaseUrl, supabaseKey);
-        
-        // Add event listeners after DOM is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('loginBtn').addEventListener('click', async () => {
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-                const resultDiv = document.getElementById('result');
-                
-                resultDiv.innerHTML = '<p>Testing login with Supabase...</p>';
-                
-                try {
-                    console.log('Attempting to sign in with:', { email, password });
-                    
-                    // Sign in with Supabase Auth
-                    const { data, error } = await supabase.auth.signInWithPassword({
-                        email,
-                        password,
-                    });
-                    
-                    console.log('Login response:', { data, error });
-                    
-                    resultDiv.innerHTML = `
-                        <h3>Login Result:</h3>
-                        <pre>${JSON.stringify({ data, error }, null, 2)}</pre>
-                    `;
-                    
-                    if (error) {
-                        resultDiv.innerHTML += `
-                            <p style="color: red">Login failed: ${error.message}</p>
-                        `;
-                    } else if (data.session) {
-                        resultDiv.innerHTML += `
-                            <p style="color: green">Login successful!</p>
-                            <p>User ID: ${data.session.user.id}</p>
-                            <button id="dashboardBtn">Go to Dashboard</button>
-                        `;
-                        
-                        document.getElementById('dashboardBtn').addEventListener('click', () => {
-                            window.location.href = 'http://localhost:8084/dashboard';
-                        });
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    resultDiv.innerHTML = `
-                        <h3>Error:</h3>
-                        <pre>${error.toString()}</pre>
-                    `;
+        // WARNING: Hardcoded Supabase Anon key removed for security.
+        // Load this from a secure config or env var for testing.
+        // const supabaseKey = 'YOUR_SUPABASE_ANON_KEY_HERE';
+        // const supabase = createClient(supabaseUrl, supabaseKey);
+
+        document.getElementById('loginBtn').addEventListener('click', async () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('result');
+
+            resultDiv.innerHTML = '<p>Attempting login...</p>';
+
+            // Cannot proceed without initializing supabase client with a key
+            alert('Supabase client not initialized. Add Anon Key to proceed with test.');
+            /*
+            try {
+                console.log('Attempting to sign in with:', { email, password });
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password,
+                });
+
+                console.log('Supabase Auth Response:', { data, error });
+
+                if (error) {
+                    resultDiv.innerHTML = `<p style="color: red;">Login Error: ${error.message}</p><pre>${JSON.stringify(error, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<p style="color: green;">Login Success!</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
                 }
-            });
-            
-            document.getElementById('clearBtn').addEventListener('click', () => {
-                document.getElementById('result').innerHTML = '<p>Results cleared...</p>';
-            });
-            
-            document.getElementById('goToAppBtn').addEventListener('click', () => {
-                window.location.href = 'http://localhost:8084/login';
-            });
+            } catch (err) {
+                console.error('Unexpected JS error:', err);
+                resultDiv.innerHTML = `<p style="color: darkred;">JavaScript Error: ${err.message}</p>`;
+            }
+            */
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            document.getElementById('result').innerHTML = '';
+        });
+
+        document.getElementById('goToAppBtn').addEventListener('click', () => {
+            window.location.href = 'http://localhost:8084/login';
         });
     </script>
 </body>

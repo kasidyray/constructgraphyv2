@@ -55,16 +55,14 @@
         <input type="email" id="email" value="admin@example.com">
         
         <label for="password">Password:</label>
-        <input type="password" id="password" value="password123">
+        <input type="password" id="password" placeholder="Enter test password">
         
-        <button id="loginBtn">Test Login</button>
-        <button id="clearBtn">Clear Results</button>
+        <button id="loginBtn">Test Supabase Token Login</button>
+        <button id="clearBtn">Clear</button>
         <button id="goToAppBtn">Go to App (Port 8084)</button>
     </div>
     
-    <div class="result" id="result">
-        <p>Results will appear here...</p>
-    </div>
+    <div id="result" class="result"></div>
     
     <div>
         <h2>Manual Test Instructions</h2>
@@ -103,72 +101,61 @@ fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
     </div>
     
     <script>
-        document.getElementById('loginBtn').addEventListener('click', async () => {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const resultDiv = document.getElementById('result');
+      const supabaseUrl = 'https://oxobdlvtrwgzxnpkbvmz.supabase.co';
+      // WARNING: Hardcoded Supabase Anon key removed for security.
+      // const supabaseKey = 'YOUR_SUPABASE_ANON_KEY_HERE';
+
+      async function testTokenLogin() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const resultDiv = document.getElementById('result');
+        
+        resultDiv.innerHTML = '<p>Attempting direct token fetch...</p>';
+
+        // Cannot proceed without key
+        alert('Supabase Key not set. Cannot test token endpoint.');
+        /*
+        try {
+            const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': supabaseKey, // Key needed here
+                    'Authorization': `Bearer ${supabaseKey}` // Key needed here
+                },
+                body: JSON.stringify({
+                    email,
+                    password // Password needed here
+                })
+            });
+
+            const data = await response.json();
+            console.log('Direct Token Response:', data);
             
-            resultDiv.innerHTML = '<p>Testing login with direct API call...</p>';
-            
-            try {
-                console.log('Attempting to sign in with:', { email, password });
-                
-                // Make a direct fetch request to Supabase
-                const supabaseUrl = 'https://oxobdlvtrwgzxnpkbvmz.supabase.co';
-                const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94b2JkbHZ0cndnenhucGtidm16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE4NzU4NjMsImV4cCI6MjA1NzQ1MTg2M30.QAprkWsOEvYGl_vdV6bXveuh7ZcEF1N5TZoWuGGE_ys';
-                
-                const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': supabaseKey,
-                        'Authorization': `Bearer ${supabaseKey}`
-                    },
-                    body: JSON.stringify({
-                        email,
-                        password
-                    })
-                });
-                
-                const data = await response.json();
-                console.log('Login response:', data);
-                
-                resultDiv.innerHTML = `
-                    <h3>Login Result:</h3>
-                    <pre>${JSON.stringify(data, null, 2)}</pre>
-                `;
-                
-                if (data.error || data.error_description) {
-                    resultDiv.innerHTML += `
-                        <p style="color: red">Login failed: ${data.error_description || data.error}</p>
-                    `;
-                } else if (data.access_token) {
-                    resultDiv.innerHTML += `
-                        <p style="color: green">Login successful!</p>
-                        <p>User ID: ${data.user.id}</p>
-                        <button id="dashboardBtn">Go to Dashboard</button>
-                    `;
-                    
-                    document.getElementById('dashboardBtn').addEventListener('click', () => {
-                        window.location.href = 'http://localhost:8084/dashboard';
-                    });
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                resultDiv.innerHTML = `
-                    <h3>Error:</h3>
-                    <pre>${error.toString()}</pre>
-                `;
+            resultDiv.innerHTML = `<h3>Direct Token Response:</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+            if (!response.ok) {
+                 resultDiv.innerHTML += `<p style="color: red;">Error fetching token: ${data.error_description || response.statusText}</p>`;
+            } else if (data.access_token) {
+                 resultDiv.innerHTML += `<p style="color: green;">Token fetched successfully!</p>`;
             }
-        });
-        
-        document.getElementById('clearBtn').addEventListener('click', () => {
-            document.getElementById('result').innerHTML = '<p>Results cleared...</p>';
-        });
-        
-        document.getElementById('goToAppBtn').addEventListener('click', () => {
-            window.location.href = 'http://localhost:8084/login';
-        });
+            
+        } catch (error) {
+            console.error('Error fetching token:', error);
+            resultDiv.innerHTML = `<p style="color: darkred;">JavaScript Error: ${error.message}</p>`;
+        }
+        */
+      }
+
+      document.getElementById('loginBtn').addEventListener('click', testTokenLogin);
+
+      document.getElementById('clearBtn').addEventListener('click', () => {
+        document.getElementById('result').innerHTML = '';
+      });
+
+      document.getElementById('goToAppBtn').addEventListener('click', () => {
+        window.location.href = 'http://localhost:8084/login';
+      });
     </script>
 </body>
 </html> 

@@ -47,7 +47,7 @@
         }
     </style>
     <!-- Include Supabase JS directly -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <h1>Direct Supabase Login Test</h1>
@@ -57,7 +57,7 @@
         <input type="email" id="email" value="admin@example.com">
         
         <label for="password">Password:</label>
-        <input type="password" id="password" value="password123">
+        <input type="password" id="password" placeholder="Enter test password">
         
         <button id="loginBtn">Test Login</button>
         <button id="clearBtn">Clear Results</button>
@@ -69,59 +69,46 @@
     </div>
     
     <script>
-        // Initialize Supabase client
         const supabaseUrl = 'https://oxobdlvtrwgzxnpkbvmz.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94b2JkbHZ0cndnenhucGtidm16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE4NzU4NjMsImV4cCI6MjA1NzQ1MTg2M30.QAprkWsOEvYGl_vdV6bXveuh7ZcEF1N5TZoWuGGE_ys';
-        
-        // Correctly initialize the Supabase client
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-        
-        document.getElementById('loginBtn').addEventListener('click', async () => {
+        // WARNING: Hardcoded Supabase Anon key removed for security.
+        // Load this from a secure config or env var for testing.
+        // const supabaseKey = 'YOUR_SUPABASE_ANON_KEY_HERE'; 
+        // const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        async function signIn() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const resultDiv = document.getElementById('result');
+
+            if (!email || !password) {
+                alert('Please enter both email and password.');
+                return;
+            }
             
-            resultDiv.innerHTML = '<p>Testing login with Supabase...</p>';
-            
+            // Cannot proceed without initializing supabase client with a key
+            alert('Supabase client not initialized. Add Anon Key to proceed with test.');
+            /* 
             try {
                 console.log('Attempting to sign in with:', { email, password });
-                
-                // Sign in with Supabase Auth
                 const { data, error } = await supabase.auth.signInWithPassword({
                     email,
                     password,
                 });
-                
-                console.log('Login response:', { data, error });
-                
-                resultDiv.innerHTML = `
-                    <h3>Login Result:</h3>
-                    <pre>${JSON.stringify({ data, error }, null, 2)}</pre>
-                `;
-                
+
                 if (error) {
-                    resultDiv.innerHTML += `
-                        <p style="color: red">Login failed: ${error.message}</p>
-                    `;
-                } else if (data.session) {
-                    resultDiv.innerHTML += `
-                        <p style="color: green">Login successful!</p>
-                        <p>User ID: ${data.session.user.id}</p>
-                        <button id="dashboardBtn">Go to Dashboard</button>
-                    `;
-                    
-                    document.getElementById('dashboardBtn').addEventListener('click', () => {
-                        window.location.href = 'http://localhost:8084/dashboard';
-                    });
+                    console.error('Login error:', error);
+                    document.getElementById('result').textContent = `Error: ${error.message}`;
+                } else {
+                    console.log('Login successful:', data);
+                    document.getElementById('result').textContent = `Success! User: ${data.user.email}, Session Active: ${!!data.session}`;
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                resultDiv.innerHTML = `
-                    <h3>Error:</h3>
-                    <pre>${error.toString()}</pre>
-                `;
+            } catch (err) {
+                console.error('Unexpected error during login:', err);
+                document.getElementById('result').textContent = `Unexpected Error: ${err.message}`;
             }
-        });
+            */
+        }
+        
+        document.getElementById('loginBtn').addEventListener('click', signIn);
         
         document.getElementById('clearBtn').addEventListener('click', () => {
             document.getElementById('result').innerHTML = '<p>Results cleared...</p>';

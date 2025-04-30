@@ -41,7 +41,9 @@
     <ol>
         <li>Clear your browser cache and cookies</li>
         <li>Try using the direct login URL: <a href="http://localhost:8084/login">http://localhost:8084/login</a></li>
-        <li>Use the admin demo account: admin@example.com / password123</li>
+        <li>Ensure Supabase is running (if locally)</li>
+        <li>Check browser console for errors</li>
+        <li>Use the admin demo account: admin@example.com</li>
     </ol>
     
     <h2>Authentication Flow</h2>
@@ -63,7 +65,7 @@ const { data, error } = await fetch('http://localhost:8084/api/login', {
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ 
     email: 'admin@example.com', 
-    password: 'password123' 
+    // password: 'YOUR_TEST_PASSWORD' 
   })
 }).then(res => res.json());
 
