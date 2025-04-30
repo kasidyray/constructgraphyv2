@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getUserProjectFavorites, addToFavorites, removeFromFavorites } from "@/services/favoriteService";
 import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
+import Breadcrumb from "@/components/ui/breadcrumb";
 
 interface HomeownerProjectViewProps {
   project: Project;
@@ -142,20 +143,28 @@ const HomeownerProjectView: React.FC<HomeownerProjectViewProps> = ({
     if (showOnlyFavorites) {
       filtered = filtered.filter(image => favorites.has(image.id));
       // When showing only favorites, return them directly without applying date filters
-      return filtered;
+      // But still sort by date (newest first)
+      return [...filtered].sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
     }
     
     // Otherwise, apply year and month filters to all images
-    return filtered.filter(image => {
+    filtered = filtered.filter(image => {
       const imageDate = new Date(image.createdAt);
       const imageYear = imageDate.getFullYear().toString();
       const imageMonth = MONTHS[imageDate.getMonth()];
       
-      const yearMatch = yearFilter === 'All' || imageYear === yearFilter;
-      const monthMatch = monthFilter === 'All' || imageMonth === monthFilter;
+      const yearMatch = yearFilter === 'all' || imageYear === yearFilter;
+      const monthMatch = monthFilter === 'all' || imageMonth === monthFilter;
       
       return yearMatch && monthMatch;
     });
+    
+    // Sort filtered images from newest to oldest
+    return [...filtered].sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
   }, [projectImages, yearFilter, monthFilter, favorites, showOnlyFavorites]);
 
   // Custom image renderer to add favorite functionality
@@ -163,8 +172,15 @@ const HomeownerProjectView: React.FC<HomeownerProjectViewProps> = ({
     toggleFavorite(imageId);
   };
 
+  // Breadcrumb segments
+  const breadcrumbSegments = [
+    { name: 'Dashboard', href: '/dashboard' }, // Link back to homeowner dashboard
+    { name: project?.title || 'Project Details' } // Use project.title
+  ];
+
   return (
     <div className="container mx-auto px-4 md:max-w-screen-xl py-6">
+      <Breadcrumb segments={breadcrumbSegments} />
       <ProjectHeader 
         project={project} 
         isAdmin={false}

@@ -114,7 +114,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   };
 
   const toggleFavorite = (imageId: string) => {
-    if (onUpdate && isHomeowner) {
+    if (onUpdate && (isHomeowner || isBuilder)) {
       onUpdate(imageId);
     }
   };
@@ -202,7 +202,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
               <div className="flex justify-between items-center">
                 <p className="text-sm text-white font-medium">{formatDate(image.createdAt)}</p>
-                {isHomeowner && (
+                {(isHomeowner || isBuilder) && (
                   <div className="flex items-center bg-white/90 rounded-full p-1">
                     <button
                       className="p-1.5 rounded-full flex items-center justify-center"
@@ -262,7 +262,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
-                  {isHomeowner && (
+                  {(isHomeowner || isBuilder) && (
                     <Button
                       variant="ghost"
                       size="icon"
