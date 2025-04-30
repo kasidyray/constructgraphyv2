@@ -51,42 +51,46 @@ const Login: React.FC = () => {
       
       {/* Right side - Login form */}
       <div className="relative flex w-full flex-col justify-between bg-white px-8 py-8 lg:w-1/2">
-        {/* Top Right Links */}
-        <div className="absolute top-8 right-8 space-x-4">
-          <Link to="/about" className="text-sm text-gray-600 hover:text-gray-900">About Us</Link>
-          <Link to="/contact" className="text-sm text-gray-600 hover:text-gray-900">Contact Us</Link>
-        </div>
-
         {/* Center Content */}
         <div className="flex flex-col justify-center flex-grow">
-        <div className="mb-6 flex justify-center">
-          <LazyImage 
-            src="/lovable-uploads/f03a9d6d-3e35-4b47-a5da-11e2eb0d92b1.png" 
-            alt="BuildTracker" 
-            className="h-8" 
-          />
-        </div>
-        <LoginForm />
-        {/* Add Sign Up Link */}
-        <p className="mt-4 text-center text-sm text-gray-600">
-          Don't have an account?{' '}
-          <Link to="/signup" className="font-medium text-[#D1522E] hover:underline">
-            Sign Up
-          </Link>
-        </p>
+          <div className="mb-6 flex justify-center">
+            <LazyImage 
+              src="/lovable-uploads/f03a9d6d-3e35-4b47-a5da-11e2eb0d92b1.png" 
+              alt="BuildTracker" 
+              className="h-8" 
+            />
+          </div>
+          <LoginForm />
+          <p className="mt-4 text-center text-sm text-gray-600">
+            Don't have an account?{' '}
+            <Link to="/signup" className="font-medium text-[#D1522E] hover:underline">
+              Sign Up
+            </Link>
+          </p>
         </div>
 
-        {/* Bottom Social Links */}
-        <div className="flex justify-center space-x-6 mt-8">
-          <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-600">
-            <Facebook className="h-5 w-5" />
-          </a>
-          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-600">
-            <Instagram className="h-5 w-5" />
-          </a>
-          <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-600">
-            <Linkedin className="h-5 w-5" />
-          </a>
+        {/* Bottom Links - Restructured */}
+        <div className="flex flex-wrap justify-between items-center mt-8 border-t pt-6 border-gray-200">
+          {/* Left: Text Links */}
+          <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-500">
+            <Link to="/about" className="hover:text-gray-700">About Us</Link>
+            <Link to="/contact" className="hover:text-gray-700">Contact Us</Link>
+            <Link to="/terms-of-service" className="hover:text-gray-700">Terms</Link>
+            <Link to="/privacy-policy" className="hover:text-gray-700">Privacy</Link>
+            <Link to="/cookie-policy" className="hover:text-gray-700">Cookies</Link>
+          </div>
+          {/* Right: Social Links */}
+          <div className="flex space-x-6 mt-4 sm:mt-0">
+            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-600">
+              <Facebook className="h-5 w-5" />
+            </a>
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-600">
+              <Instagram className="h-5 w-5" />
+            </a>
+            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-600">
+              <Linkedin className="h-5 w-5" />
+            </a>
+          </div>
         </div>
       </div>
     </div>;

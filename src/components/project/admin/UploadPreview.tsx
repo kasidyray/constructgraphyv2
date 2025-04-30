@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Trash, X, Upload, Check } from "lucide-react";
+import { Trash, X, Upload, Check, Loader2 } from "lucide-react";
 
 interface UploadPreviewProps {
   files: File[];
@@ -8,6 +8,7 @@ interface UploadPreviewProps {
   onRemoveFile: (index: number) => void;
   onPublish: () => void;
   onDiscard: () => void;
+  isUploading?: boolean;
   className?: string;
 }
 
@@ -17,6 +18,7 @@ const UploadPreview: React.FC<UploadPreviewProps> = ({
   onRemoveFile,
   onPublish,
   onDiscard,
+  isUploading = false,
   className = "",
 }) => {
   if (files.length === 0) {
@@ -33,6 +35,7 @@ const UploadPreview: React.FC<UploadPreviewProps> = ({
             size="sm" 
             onClick={onDiscard}
             className="flex items-center gap-1"
+            disabled={isUploading}
           >
             <X className="h-4 w-4" />
             Discard
@@ -41,9 +44,13 @@ const UploadPreview: React.FC<UploadPreviewProps> = ({
             size="sm" 
             onClick={onPublish}
             className="flex items-center gap-1"
+            disabled={isUploading || files.length === 0}
           >
-            <Check className="h-4 w-4" />
-            Publish
+            {isUploading ? (
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Publishing...</>
+            ) : (
+              <><Check className="h-4 w-4" /> Publish</>
+            )}
           </Button>
         </div>
       </div>

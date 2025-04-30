@@ -6,6 +6,7 @@ import { User, Project } from "@/types";
 import StatCards from "@/components/dashboard/StatCards";
 import HomeownerTable from "@/components/dashboard/HomeownerTable";
 import BuilderTable from "@/components/dashboard/BuilderTable";
+import AdminTable from "@/components/dashboard/AdminTable";
 import NewUserDialog from "@/components/dashboard/NewUserDialog";
 import NewProjectDialog from "@/components/dashboard/NewProjectDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,6 +25,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   const [homeowners, setHomeowners] = useState<User[]>([]);
   const [builders, setBuilders] = useState<User[]>([]);
+  const [admins, setAdmins] = useState<User[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,8 +37,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       
       // Fetch users
       const users = await getUsers();
-      setHomeowners(users.filter(user => user.role === "homeowner"));
-      setBuilders(users.filter(user => user.role === "builder"));
+      setHomeowners(users.filter(u => u.role === "homeowner"));
+      setBuilders(users.filter(u => u.role === "builder"));
+      setAdmins(users.filter(u => u.role === "admin"));
       
       // Fetch projects
       const allProjects = await getProjects();
@@ -73,6 +76,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       setHomeowners(prev => [newUser, ...prev]);
     } else if (newUser.role === "builder") {
       setBuilders(prev => [newUser, ...prev]);
+    } else if (newUser.role === "admin") {
+      setAdmins(prev => [newUser, ...prev]);
     }
     
     toast.success(`${newUser.role.charAt(0).toUpperCase() + newUser.role.slice(1)} created successfully`);
@@ -139,12 +144,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               <Plus className="mr-2 h-4 w-4" />
               New Project
             </Button>
-            <Button variant="outline" asChild>
-              <Link to="/admin/email-test">
-                <Mail className="mr-2 h-4 w-4" />
-                Email Test
-              </Link>
-            </Button>
           </div>
         </div>
         
@@ -154,6 +153,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
           <TabsList>
             <TabsTrigger value="homeowners">Homeowners</TabsTrigger>
             <TabsTrigger value="builders">Builders</TabsTrigger>
+            <TabsTrigger value="admins">Admins</TabsTrigger>
           </TabsList>
           <TabsContent value="homeowners" className="mt-6">
             <HomeownerTable 
@@ -165,6 +165,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
             <BuilderTable 
               builders={builders} 
               onBuilderSelect={handleBuilderSelect} 
+            />
+          </TabsContent>
+          <TabsContent value="admins" className="mt-6">
+            <AdminTable 
+              admins={admins} 
+              currentUser={user}
             />
           </TabsContent>
         </Tabs>

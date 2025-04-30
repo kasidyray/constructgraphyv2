@@ -90,6 +90,7 @@ const PhotoUploader: React.FC<PhotoUploaderProps> = ({
         onRemoveFile={handleRemoveFile}
         onPublish={handlePublish}
         onDiscard={handleDiscard}
+        isUploading={isUploading}
       />
     </div>
   );

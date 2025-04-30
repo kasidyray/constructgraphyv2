@@ -9,6 +9,7 @@ import { updateProject } from "@/services/projectService";
 import { uploadProjectImages, deleteProjectImage, updateProjectImage, getProjectImages } from "@/services/imageService";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import Breadcrumb from "@/components/ui/breadcrumb";
 
 // Define the ImageCategory type directly here since it's not exported from imageService
 type ImageCategory = 'other' | 'interior' | 'exterior' | 'structural' | 'finishes' | 'general';
@@ -68,11 +69,27 @@ const AdminProjectView: React.FC<AdminProjectViewProps> = ({
 
   // Handle project update
   const handleProjectUpdate = async (updatedProjectData: Partial<Project>) => {
-    if (!project) return;
+    if (!project || !user) return; // Ensure user exists as well
     
     setIsUpdating(true);
     try {
-      const updatedProject = await updateProject(project.id, updatedProjectData, user);
+      // Ensure the user object passed matches the type expected by updateProject
+      // Map the user from AuthContext to the User type from src/types
+      const userForUpdate: import("@/types").User = {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        name: user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim(),
+        first_name: user.first_name,
+        last_name: user.last_name,
+        // Ensure createdAt is included, even if mapping from string to Date/string
+        createdAt: user.created_at, 
+        // Add other potentially missing fields from src/types/index.ts User if needed
+        // avatar: user.avatar, // Example if avatar was needed
+        // phone: user.phone, // Example if phone was needed
+      };
+
+      const updatedProject = await updateProject(project.id, updatedProjectData, userForUpdate);
       onProjectUpdate(updatedProject);
     } catch (error) {
       console.error("Error updating project:", error);
@@ -134,9 +151,16 @@ const AdminProjectView: React.FC<AdminProjectViewProps> = ({
     }
   };
 
+  // Breadcrumb segments
+  const breadcrumbSegments = [
+    { name: 'Admin Dashboard', href: '/admin' }, // Link back to admin dashboard
+    { name: project?.title || 'Project Details' } // Current page (project title)
+  ];
+
   return (
     <>
       <div className="container mx-auto px-4 md:max-w-screen-xl py-8">
+        <Breadcrumb segments={breadcrumbSegments} />
         <ProjectHeader project={project} isAdmin={true} />
         
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 mt-6">

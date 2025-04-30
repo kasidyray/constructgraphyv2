@@ -1,13 +1,25 @@
 import React, { useState, useEffect } from "react";
-import { Eye, Search, Edit } from "lucide-react";
+import { Eye, Search, Edit, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { User, Project } from "@/types";
 import { getProjects } from "@/services/projectService";
+import { deleteUser } from "@/services/userService";
 import { useAuth } from "@/contexts/AuthContext";
 import EditUserDialog from "./EditUserDialog";
+import { toast } from "sonner";
 
 interface HomeownerTableProps {
   homeowners: User[];
@@ -25,6 +37,9 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({
   const [homeowners, setHomeowners] = useState<User[]>(initialHomeowners);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [userToEdit, setUserToEdit] = useState<User | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     setHomeowners(initialHomeowners);
@@ -72,6 +87,33 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({
     );
   };
 
+  const handleDeleteClick = (homeowner: User) => {
+    setUserToDelete(homeowner);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      const success = await deleteUser(userToDelete.id);
+      if (success) {
+        toast.success(`Homeowner ${userToDelete.name} deleted successfully.`);
+        setHomeowners(prev => prev.filter(h => h.id !== userToDelete.id));
+        setShowDeleteConfirm(false);
+        setUserToDelete(null);
+      } else {
+        toast.error(`Failed to delete ${userToDelete.name}.`);
+      }
+    } catch (error: any) {
+      console.error("Error deleting homeowner:", error);
+      toast.error(error.message || `Failed to delete ${userToDelete.name}.`);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return <>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -104,7 +146,7 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({
                 <TableHead>Phone</TableHead>
                 <TableHead>Projects</TableHead>
                 {user?.role !== "builder" && <TableHead>Builder</TableHead>}
-                <TableHead>Actions</TableHead>
+                <TableHead className="text-right"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -115,8 +157,8 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({
                   <TableCell>{homeowner.phone || "N/A"}</TableCell>
                   <TableCell>{getHomeownerProjectCount(homeowner.id)}</TableCell>
                   {user?.role !== "builder" && <TableCell>{homeowner.builderName || "Unassigned"}</TableCell>}
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end space-x-1">
                       <Button 
                         variant="outline" 
                         size="sm" 
@@ -124,7 +166,7 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({
                         className="flex items-center gap-1"
                       >
                         <Eye className="h-3.5 w-3.5" />
-                        View Projects
+                        <span className="hidden sm:inline">View Projects</span>
                       </Button>
                       <Button 
                         variant="ghost" 
@@ -134,6 +176,17 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
+                      {user?.role !== 'builder' && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => handleDeleteClick(homeowner)}
+                          title="Delete Homeowner"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -155,6 +208,29 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({
         userToEdit={userToEdit}
         onUserUpdated={handleUserUpdated}
       />
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the user 
+              <span className="font-semibold">{userToDelete?.name}</span> 
+              and all associated projects. 
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDelete} 
+              disabled={isDeleting}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Delete User
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>;
 };
 

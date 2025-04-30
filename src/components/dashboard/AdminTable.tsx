@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Eye, Search, Edit, Trash2, Loader2 } from "lucide-react";
+import { Search, Edit, Trash2, Loader2 } from "lucide-react"; // Removed Eye icon
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,25 +14,25 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { User, Project } from "@/types";
-import { getProjects } from "@/services/projectService";
+import { User } from "@/types";
+// No need to fetch projects for Admin table
+// import { getProjects } from "@/services/projectService"; 
 import { deleteUser } from "@/services/userService";
 import EditUserDialog from "./EditUserDialog";
 import { toast } from "sonner";
 
-interface BuilderTableProps {
-  builders: User[];
-  onBuilderSelect: (builder: User) => void;
+interface AdminTableProps {
+  admins: User[];
+  currentUser: User; // Pass the current logged-in admin user
+  // onAdminSelect is not needed as Admins don't have specific project views like builders
 }
 
-const BuilderTable: React.FC<BuilderTableProps> = ({
-  builders: initialBuilders,
-  onBuilderSelect
+const AdminTable: React.FC<AdminTableProps> = ({
+  admins: initialAdmins,
+  currentUser
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [builders, setBuilders] = useState<User[]>(initialBuilders);
+  const [admins, setAdmins] = useState<User[]>(initialAdmins);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [userToEdit, setUserToEdit] = useState<User | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -40,66 +40,61 @@ const BuilderTable: React.FC<BuilderTableProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
   
   useEffect(() => {
-    setBuilders(initialBuilders);
-  }, [initialBuilders]);
+    setAdmins(initialAdmins);
+  }, [initialAdmins]);
 
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const allProjects = await getProjects();
-        setProjects(allProjects);
-      } catch (err) {
-        console.error("Error fetching projects:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchProjects();
-  }, []);
-  
-  const filteredBuilders = builders.filter(builder => 
-    builder.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    builder.email.toLowerCase().includes(searchQuery.toLowerCase())
+  // No need to fetch projects
+
+  const filteredAdmins = admins.filter(admin => 
+    (admin.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+    admin.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const getBuilderProjectCount = (builderId: string): number => {
-    return projects.filter(project => project.builderId === builderId).length;
-  };
+  // No project count needed
 
-  const handleEditClick = (builder: User) => {
-    setUserToEdit(builder);
+  const handleEditClick = (admin: User) => {
+    setUserToEdit(admin);
     setShowEditDialog(true);
   };
 
   const handleUserUpdated = (updatedUser: User) => {
-    setBuilders(prevBuilders => 
-      prevBuilders.map(b => b.id === updatedUser.id ? updatedUser : b)
+    setAdmins(prevAdmins => 
+      prevAdmins.map(a => a.id === updatedUser.id ? updatedUser : a)
     );
+    // Also need to potentially update currentUser if the admin edits themselves?
+    // This depends on how profile updates are reflected in AuthContext.
+    // For now, just update the table.
   };
 
-  const handleDeleteClick = (builder: User) => {
-    setUserToDelete(builder);
+  const handleDeleteClick = (admin: User) => {
+    setUserToDelete(admin);
     setShowDeleteConfirm(true);
   };
 
   const handleConfirmDelete = async () => {
     if (!userToDelete) return;
     
+    // Double check: Prevent self-deletion (although button should be disabled)
+    if (userToDelete.id === currentUser.id) {
+      toast.error("You cannot delete your own account.");
+      setShowDeleteConfirm(false);
+      return;
+    }
+
     setIsDeleting(true);
     try {
       const success = await deleteUser(userToDelete.id);
       if (success) {
-        toast.success(`Builder ${userToDelete.name} deleted successfully.`);
-        setBuilders(prev => prev.filter(b => b.id !== userToDelete.id));
+        toast.success(`Admin ${userToDelete.name || userToDelete.email} deleted successfully.`);
+        setAdmins(prev => prev.filter(a => a.id !== userToDelete.id));
         setShowDeleteConfirm(false);
         setUserToDelete(null);
       } else {
-         toast.error(`Failed to delete ${userToDelete.name}.`);
+         toast.error(`Failed to delete ${userToDelete.name || userToDelete.email}.`);
       }
     } catch (error: any) {
-      console.error("Error deleting builder:", error);
-      toast.error(error.message || `Failed to delete ${userToDelete.name}.`);
+      console.error("Error deleting admin:", error);
+      toast.error(error.message || `Failed to delete ${userToDelete.name || userToDelete.email}.`);
     } finally {
       setIsDeleting(false);
     }
@@ -110,9 +105,9 @@ const BuilderTable: React.FC<BuilderTableProps> = ({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <div>
-            <CardTitle>Builders</CardTitle>
+            <CardTitle>Administrators</CardTitle>
             <CardDescription>
-              View and manage all builders and their projects
+              Manage administrator accounts.
             </CardDescription>
           </div>
           <div className="w-full max-w-sm">
@@ -134,42 +129,33 @@ const BuilderTable: React.FC<BuilderTableProps> = ({
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Phone</TableHead>
-                <TableHead>Projects</TableHead>
                 <TableHead className="text-right"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredBuilders.map(builder => (
-                <TableRow key={builder.id}>
-                  <TableCell className="font-medium">{builder.name}</TableCell>
-                  <TableCell>{builder.email}</TableCell>
-                  <TableCell>{builder.phone || "N/A"}</TableCell>
-                  <TableCell>{getBuilderProjectCount(builder.id)}</TableCell>
+              {filteredAdmins.map(admin => (
+                <TableRow key={admin.id}>
+                  <TableCell className="font-medium">{admin.name || '-'}</TableCell>
+                  <TableCell>{admin.email}</TableCell>
+                  <TableCell>{admin.phone || "N/A"}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end space-x-1">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => onBuilderSelect(builder)}
-                        className="flex items-center gap-1"
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline">View All Projects</span>
-                      </Button>
+                      {/* Removed View Projects Button */}
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        onClick={() => handleEditClick(builder)}
-                        title="Edit Builder"
+                        onClick={() => handleEditClick(admin)}
+                        title="Edit Admin"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        onClick={() => handleDeleteClick(builder)}
-                        title="Delete Builder"
+                        onClick={() => handleDeleteClick(admin)}
+                        title="Delete Admin"
                         className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        disabled={admin.id === currentUser.id} // Disable delete for self
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -177,10 +163,10 @@ const BuilderTable: React.FC<BuilderTableProps> = ({
                   </TableCell>
                 </TableRow>
               ))}
-              {filteredBuilders.length === 0 && (
+              {filteredAdmins.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
-                    No builders found matching your search.
+                  <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
+                    No administrators found matching your search.
                   </TableCell>
                 </TableRow>
               )}
@@ -188,31 +174,35 @@ const BuilderTable: React.FC<BuilderTableProps> = ({
           </Table>
         </CardContent>
       </Card>
+      
+      {/* Edit User Dialog (reused) */}
       <EditUserDialog 
         open={showEditDialog} 
         onOpenChange={setShowEditDialog}
-        userToEdit={userToEdit}
+        userToEdit={userToEdit} // Pass admin user here
         onUserUpdated={handleUserUpdated}
       />
+
+      {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the builder 
-              <span className="font-semibold">{userToDelete?.name}</span> 
-              and all associated projects.
+              This action cannot be undone. This will permanently delete the admin user 
+              <span className="font-semibold">{userToDelete?.name || userToDelete?.email}</span>.
+              {/* Removed mention of deleting projects, as it's less relevant for admins */}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleConfirmDelete} 
-              disabled={isDeleting}
+              disabled={isDeleting || userToDelete?.id === currentUser.id} // Double disable
               className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             >
               {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Delete Builder
+              Delete Admin
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -221,4 +211,4 @@ const BuilderTable: React.FC<BuilderTableProps> = ({
   );
 };
 
-export default BuilderTable;
+export default AdminTable; 

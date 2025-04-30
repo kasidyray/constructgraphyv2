@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "@/components/ui/use-toast";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { User, UserRole } from "@/types";
 import { createUser } from "@/services/userService";
+import { Loader2 } from "lucide-react";
 
 interface NewUserDialogProps {
   open: boolean;
@@ -15,12 +16,14 @@ interface NewUserDialogProps {
   onUserCreated?: (user: User) => void;
 }
 
+type ActiveTab = "homeowner" | "builder" | "admin";
+
 const NewUserDialog: React.FC<NewUserDialogProps> = ({ 
   open, 
   onOpenChange,
   onUserCreated
 }) => {
-  const [activeTab, setActiveTab] = useState<"homeowner" | "builder">("homeowner");
+  const [activeTab, setActiveTab] = useState<ActiveTab>("homeowner");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [nameBuilder, setNameBuilder] = useState("");
@@ -28,90 +31,81 @@ const NewUserDialog: React.FC<NewUserDialogProps> = ({
   const [builderEmail, setBuilderEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [builderPhoneNumber, setBuilderPhoneNumber] = useState("");
+  const [adminFirstName, setAdminFirstName] = useState("");
+  const [adminLastName, setAdminLastName] = useState("");
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminPhoneNumber, setAdminPhoneNumber] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
+    let newUser: Omit<User, "id" | "createdAt"> | null = null;
+    let validationError = false;
+
     try {
       if (activeTab === "homeowner") {
         if (!firstName || !lastName || !email || !phoneNumber) {
-          toast({
-            title: "Error",
-            description: "Please fill all fields",
-            variant: "destructive",
-          });
-          return;
+          validationError = true;
         }
-        
-        // Create new homeowner
-        const newUser: Omit<User, "id" | "createdAt"> = {
+        newUser = {
           name: `${firstName} ${lastName}`,
           email,
           phone: phoneNumber,
           role: "homeowner" as UserRole,
         };
-        
-        // Add to database
-        const createdUser = await createUser(newUser);
-        
-        if (createdUser) {
-          toast({
-            title: "Success",
-            description: "Homeowner created successfully",
-          });
-          
-          // Call onUserCreated callback if provided
-          if (onUserCreated) {
-            onUserCreated(createdUser);
-          }
-          
-          // Reset form and close dialog
-          resetForm();
-          onOpenChange(false);
-        } else {
-          throw new Error("Failed to create homeowner");
-        }
-      } else {
+      } else if (activeTab === "builder") {
         if (!nameBuilder || !builderEmail || !builderPhoneNumber) {
-          toast({
-            title: "Error",
-            description: "Please fill all fields",
-            variant: "destructive",
-          });
-          return;
+           validationError = true;
         }
-        
-        // Create new builder
-        const newUser: Omit<User, "id" | "createdAt"> = {
+        newUser = {
           name: nameBuilder,
           email: builderEmail,
           phone: builderPhoneNumber,
           role: "builder" as UserRole,
         };
-        
-        // Add to database
-        const createdUser = await createUser(newUser);
-        
-        if (createdUser) {
-          toast({
-            title: "Success",
-            description: "Builder created successfully",
-          });
-          
-          // Call onUserCreated callback if provided
-          if (onUserCreated) {
-            onUserCreated(createdUser);
-          }
-          
-          // Reset form and close dialog
-          resetForm();
-          onOpenChange(false);
-        } else {
-          throw new Error("Failed to create builder");
+      } else if (activeTab === "admin") {
+        if (!adminFirstName || !adminLastName || !adminEmail || !adminPhoneNumber) {
+          validationError = true;
         }
+         newUser = {
+          name: `${adminFirstName} ${adminLastName}`,
+          email: adminEmail,
+          phone: adminPhoneNumber,
+          role: "admin" as UserRole,
+        };
       }
+
+      if (validationError || !newUser) {
+         toast({
+            title: "Error",
+            description: "Please fill all required fields for the selected role.",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+      }
+        
+      const createdUser = await createUser(newUser);
+        
+      if (createdUser) {
+        const roleName = newUser.role.charAt(0).toUpperCase() + newUser.role.slice(1);
+        toast({
+          title: "Success",
+          description: `${roleName} created successfully. An invitation email has been sent.`, 
+        });
+          
+        if (onUserCreated) {
+          onUserCreated(createdUser);
+        }
+          
+        resetForm();
+        onOpenChange(false);
+      } else {
+        throw new Error(`Failed to create ${newUser.role}`);
+      }
+
     } catch (error) {
       console.error("Error creating user:", error);
       toast({
@@ -132,24 +126,20 @@ const NewUserDialog: React.FC<NewUserDialogProps> = ({
     setBuilderEmail("");
     setPhoneNumber("");
     setBuilderPhoneNumber("");
+    setAdminFirstName("");
+    setAdminLastName("");
+    setAdminEmail("");
+    setAdminPhoneNumber("");
   };
   
-  // Handle dialog close - prevent closing by clicking outside
   const handleDialogClose = (open: boolean) => {
-    // Only prevent closing by clicking outside when dialog is open
-    // Allow closing when explicitly requested (e.g., by clicking the X button)
-    if (!open) {
-      // If dialog is being closed
-      if (isSubmitting) {
-        // Don't allow closing while submitting
+    if (!open && isSubmitting) {
         return;
-      }
-      
-      onOpenChange(open);
-    } else {
-      // If dialog is being opened, always allow
-      onOpenChange(open);
     }
+    if (!open) {
+      resetForm();
+    }
+    onOpenChange(open);
   };
 
   return (
@@ -158,19 +148,20 @@ const NewUserDialog: React.FC<NewUserDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Create New User</DialogTitle>
           <DialogDescription>
-            Add a new homeowner or builder to the system.
+            Select the role and add the details for the new user.
           </DialogDescription>
         </DialogHeader>
         
         <Tabs 
           defaultValue="homeowner" 
           value={activeTab} 
-          onValueChange={(value) => setActiveTab(value as "homeowner" | "builder")}
+          onValueChange={(value) => setActiveTab(value as ActiveTab)}
           className="mt-2"
         >
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="homeowner">Homeowner</TabsTrigger>
             <TabsTrigger value="builder">Builder</TabsTrigger>
+            <TabsTrigger value="admin">Admin</TabsTrigger>
           </TabsList>
           
           <form onSubmit={handleSubmit}>
@@ -251,27 +242,58 @@ const NewUserDialog: React.FC<NewUserDialogProps> = ({
                 />
               </div>
             </TabsContent>
-            
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => onOpenChange(false)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
+
+            <TabsContent value="admin" className="space-y-4 pt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="adminFirstName" className="capitalize-text">First Name</Label>
+                  <Input
+                    id="adminFirstName"
+                    placeholder="Admin"
+                    value={adminFirstName}
+                    onChange={(e) => setAdminFirstName(e.target.value)}
+                    className="capitalize-text"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="adminLastName" className="capitalize-text">Last Name</Label>
+                  <Input
+                    id="adminLastName"
+                    placeholder="User"
+                    value={adminLastName}
+                    onChange={(e) => setAdminLastName(e.target.value)}
+                    className="capitalize-text"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="adminEmail">Email</Label>
+                <Input
+                  id="adminEmail"
+                  type="email"
+                  placeholder="admin@example.com"
+                  value={adminEmail}
+                  onChange={(e) => setAdminEmail(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="adminPhoneNumber">Phone Number</Label>
+                <Input
+                  id="adminPhoneNumber"
+                  type="tel"
+                  placeholder="(555) 123-4567"
+                  value={adminPhoneNumber}
+                  onChange={(e) => setAdminPhoneNumber(e.target.value)}
+                />
+              </div>
+            </TabsContent>
+
+            <DialogFooter className="pt-4">
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <span className="mr-2">Creating...</span>
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  </>
-                ) : (
-                  "Create User"
-                )}
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Create User
               </Button>
-            </div>
+            </DialogFooter>
           </form>
         </Tabs>
       </DialogContent>
