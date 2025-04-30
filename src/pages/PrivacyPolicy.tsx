@@ -1,9 +1,9 @@
 import React from "react";
-import AuthLayout from "@/components/layout/AuthLayout"; // Use AuthLayout for now
+import PublicLayout from "@/components/layout/PublicLayout";
 
 const PrivacyPolicy: React.FC = () => {
   return (
-    <AuthLayout>
+    <PublicLayout>
       <div className="container mx-auto px-4 py-8 md:max-w-4xl">
         <h1 className="text-3xl font-bold mb-6">Privacy Policy</h1>
 
@@ -67,7 +67,7 @@ const PrivacyPolicy: React.FC = () => {
           <p><em>Source: <a href="https://constructgraphy.com/privacy-policy" target="_blank" rel="noopener noreferrer">https://constructgraphy.com/privacy-policy</a></em></p>
         </div>
       </div>
-    </AuthLayout>
+    </PublicLayout>
   );
 };
 

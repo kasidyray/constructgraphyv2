@@ -1,9 +1,9 @@
 import React from "react";
-import AuthLayout from "@/components/layout/AuthLayout";
+import PublicLayout from "@/components/layout/PublicLayout";
 
 const TermsOfService: React.FC = () => {
   return (
-    <AuthLayout>
+    <PublicLayout>
       <div className="container mx-auto px-4 py-8 md:max-w-4xl">
         <h1 className="text-3xl font-bold mb-6">Terms of Service</h1>
 
@@ -65,7 +65,7 @@ const TermsOfService: React.FC = () => {
 
         </div>
       </div>
-    </AuthLayout>
+    </PublicLayout>
   );
 };
 

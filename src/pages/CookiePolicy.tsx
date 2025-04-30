@@ -1,9 +1,9 @@
 import React from "react";
-import AuthLayout from "@/components/layout/AuthLayout";
+import PublicLayout from "@/components/layout/PublicLayout";
 
 const CookiePolicy: React.FC = () => {
   return (
-    <AuthLayout>
+    <PublicLayout>
       <div className="container mx-auto px-4 py-8 md:max-w-4xl">
         <h1 className="text-3xl font-bold mb-6">Cookie Policy</h1>
 
@@ -50,7 +50,7 @@ const CookiePolicy: React.FC = () => {
           <p>If you have any questions about our use of cookies, please contact us at [Your Contact Email Address].</p>
         </div>
       </div>
-    </AuthLayout>
+    </PublicLayout>
   );
 };
 
