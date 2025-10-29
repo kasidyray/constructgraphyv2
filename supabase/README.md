@@ -110,7 +110,7 @@ node -r dotenv/config src/scripts/create-auth-users.js
 This script will:
 - Fetch all users from the `users` table
 - Create corresponding Auth users with the same IDs
-- **Note:** Passwords are not hardcoded here for security. They should be set securely during seeding or users prompted to reset.
+- Set a default password for all users (`password123`)
 
 ### 2. Apply Row Level Security (RLS) Policies
 

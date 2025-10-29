@@ -8,7 +8,7 @@ const TermsOfService: React.FC = () => {
         <h1 className="text-3xl font-bold mb-6">Terms of Service</h1>
 
         <div className="prose prose-lg max-w-none">
-          <p><em>Last Updated: [Insert Last Updated Date Here]</em></p>
+          <p><em>Last Updated: October 15, 2025</em></p>
 
           <h2 className="text-2xl font-semibold mt-6 mb-3">1. Acceptance of Terms</h2>
           <p>
@@ -61,7 +61,7 @@ const TermsOfService: React.FC = () => {
           </p>
 
           <h2 className="text-2xl font-semibold mt-6 mb-3">11. Contact Us</h2>
-          <p>If you have any questions about these Terms, please contact us at [Your Contact Email Address].</p>
+          <p>If you have any questions about these Terms, please contact us at support@constructgraphy.com.</p>
 
         </div>
       </div>

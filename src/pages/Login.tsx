@@ -35,11 +35,11 @@ const Login: React.FC = () => {
         
         <div className="absolute inset-0 flex flex-col justify-center px-16 pl-24 text-white">
           <h1 className="mb-4 text-5xl font-bold leading-tight text-left">
-            Everything you need,<br />
-            to build anything you want.
+          A Smarter Way to Manage<br />
+          Home Construction.
           </h1>
           <p className="max-w-2xl text-lg text-white/80 text-left">
-            Powerful tools to track construction progress, manage projects,
+            Powerful tools to track construction progress, manage projects,<br/>
             and keep all stakeholders connected in one place.
           </p>
         </div>

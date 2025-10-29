@@ -112,7 +112,7 @@ const ContactUs: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="text-lg font-medium text-slate-700">Call Us</h3>
-                      <span className="text-primary">+1 (555) 123-4567</span> {/* Replace with actual phone */}
+                      <span className="text-primary"> +1 4038379654</span> {/* Replace with actual phone */}
                     </div>
                   </div>
                 </div>

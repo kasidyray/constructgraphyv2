@@ -8,7 +8,7 @@ const PrivacyPolicy: React.FC = () => {
         <h1 className="text-3xl font-bold mb-6">Privacy Policy</h1>
 
         <div className="prose prose-lg max-w-none">
-          <p><em>Last Updated: [Insert Last Updated Date Here, e.g., March 15, 2024]</em></p>
+          <p><em>Last Updated: October 15, 2025</em></p>
 
           <p>Welcome to ConstructGraphy! This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our software-as-a-service platform (the "Service"). Please read this privacy policy carefully. If you do not agree with the terms of this privacy policy, please do not access the Service.</p>
 
@@ -61,9 +61,8 @@ const PrivacyPolicy: React.FC = () => {
 
           <h2 className="text-2xl font-semibold mt-6 mb-3">8. CONTACT US</h2>
           <p>If you have questions or comments about this Privacy Policy, please contact us at:</p>
-          <p>[Your Company Name/Contact Person]</p>
-          <p>[Your Company Address]</p>
-          <p>[Your Contact Email Address]</p>
+          <p>Constructgraphy</p>
+          <p>support@constructgraphy.com</p>
           <p><em>Source: <a href="https://constructgraphy.com/privacy-policy" target="_blank" rel="noopener noreferrer">https://constructgraphy.com/privacy-policy</a></em></p>
         </div>
       </div>

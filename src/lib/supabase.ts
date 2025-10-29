@@ -1,18 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
-// import { Database } from '@/types/supabase'; // Type import commented out to avoid build errors
+import { Database } from '@/types/supabase';
 
 // Use environment variables for Supabase configuration
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-// Ensure environment variables are set
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("Supabase URL and Anon Key must be provided in environment variables.");
-}
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://oxobdlvtrwgzxnpkbvmz.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94b2JkbHZ0cndnenhucGtidm16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE4NzU4NjMsImV4cCI6MjA1NzQ1MTg2M30.QAprkWsOEvYGl_vdV6bXveuh7ZcEF1N5TZoWuGGE_ys';
 
 // This is the regular client that respects RLS policies
-// export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, { // Removed Database type annotation
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
@@ -20,7 +14,17 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, { // Removed 
   }
 });
 
-// WARNING: Service role key operations should ONLY be done on a secure backend (e.g., Edge Functions).
-// The service role key MUST NOT be exposed client-side.
-// The supabaseAdmin client initialization has been removed from this file.
-// Use server-side environment variables (without VITE_ prefix) for the service key in backend code. 
+// For development purposes, we'll create a direct client that bypasses RLS
+// WARNING: In production, this should be properly secured
+// You need to add VITE_SUPABASE_SERVICE_ROLE_KEY to your .env.local file
+const serviceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+
+// If service role key is available, create an admin client
+export const supabaseAdmin = serviceRoleKey 
+  ? createClient(supabaseUrl, serviceRoleKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
+  : supabase; // Fall back to regular client if no service role key 

@@ -26,9 +26,8 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   }
 });
 
-// Default password removed for security.
-// Implement a secure way to set initial passwords (e.g., prompt, random generation + reset flow).
-// const DEFAULT_PASSWORD = 'YOUR_SECURE_DEFAULT_PASSWORD_OR_METHOD';
+// Default password for all users
+const DEFAULT_PASSWORD = 'password123';
 
 async function createAuthUsers() {
   try {
@@ -63,29 +62,25 @@ async function createAuthUsers() {
         }
 
         // Create auth user with the same ID as the database user
-        try {
-          console.log(`Creating auth user for ${user.email} (ID: ${user.id})`);
-          const { data: authUser, error: createAuthError } = await supabase.auth.admin.createUser({
-            user_id: user.id, // Link auth user to existing user ID
-            email: user.email,
-            // password: DEFAULT_PASSWORD, // REMOVED - Handle password securely
-            email_confirm: true, // Mark email as confirmed
-            user_metadata: {
-              first_name: user.first_name,
-              last_name: user.last_name,
-              role: user.role,
-            },
-          });
+        const { data: authUser, error: createError } = await supabase.auth.admin.createUser({
+          email: user.email,
+          password: DEFAULT_PASSWORD,
+          email_confirm: true,
+          user_metadata: {
+            name: user.name,
+            role: user.role
+          },
+          app_metadata: {
+            role: user.role
+          },
+          id: user.id
+        });
 
-          if (createAuthError) {
-            // Log specific error for this user but continue if possible
-            console.error(`Error creating auth user for ${user.email}:`, createAuthError.message);
-          } else {
-            console.log(`Successfully created auth user for ${user.email}`);
-          }
-        } catch (processError) {
-          console.error(`Unexpected error processing user ${user.email}:`, processError);
+        if (createError) {
+          throw createError;
         }
+
+        console.log(`Created auth user for ${user.email} with ID ${authUser.user.id}`);
       } catch (userError) {
         console.error(`Error creating auth user for ${user.email}:`, userError);
       }

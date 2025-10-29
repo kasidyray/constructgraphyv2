@@ -25,9 +25,8 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   }
 });
 
-// Default password removed for security.
-// Implement a secure way to set initial passwords if needed (e.g., prompt, random generation + reset flow).
-// const DEFAULT_PASSWORD = 'YOUR_SECURE_DEFAULT_PASSWORD_OR_METHOD';
+// Default password for all users
+const DEFAULT_PASSWORD = 'password123';
 
 async function syncAuthUsers() {
   try {
@@ -85,34 +84,29 @@ async function syncAuthUsers() {
             console.log(`Updated user ID for ${user.email} to ${existingAuthUser.id}`);
           }
         } else {
-          // If auth user doesn't exist, create one
-          console.log(`Auth user for ${user.email} (ID: ${user.id}) not found. Creating...`);
-          try {
-            const { data: newAuthUser, error: createError } = await supabase.auth.admin.createUser({
-              user_id: user.id, // Use the existing database ID
-              email: user.email,
-              // password: DEFAULT_PASSWORD, // REMOVED - Handle password securely
-              email_confirm: true, // Assume email is confirmed if user exists in DB
-              user_metadata: {
-                name: user.name,
-                role: user.role
-              },
-              app_metadata: {
-                role: user.role
-              },
-              id: user.id
-            });
-            
-            if (createError) {
-              console.error(`Error creating auth user for ${user.email}:`, createError);
-              continue;
-            }
-            
-            console.log(`Created auth user for ${user.email} with ID ${newAuthUser.user.id}`);
-          } catch (createError) {
+          // Create a new auth user with the same ID as the user in the users table
+          console.log(`Creating auth user for ${user.email} with ID ${user.id}...`);
+          
+          const { data: newAuthUser, error: createError } = await supabase.auth.admin.createUser({
+            email: user.email,
+            password: DEFAULT_PASSWORD,
+            email_confirm: true,
+            user_metadata: {
+              name: user.name,
+              role: user.role
+            },
+            app_metadata: {
+              role: user.role
+            },
+            id: user.id
+          });
+          
+          if (createError) {
             console.error(`Error creating auth user for ${user.email}:`, createError);
             continue;
           }
+          
+          console.log(`Created auth user for ${user.email} with ID ${newAuthUser.user.id}`);
         }
         
         // Ensure the profiles table has the correct data
